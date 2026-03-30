@@ -1,0 +1,76 @@
+name: smart_productivity_booster
+description: Ứng dụng quản lý thời gian và tối ưu hiệu suất cá nhân
+version: 1.0.0+1
+publish_to: "none"
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State Management
+  flutter_bloc: ^8.1.3
+  equatable: ^2.0.5
+
+  # Hive Database
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Dependency Injection
+  get_it: ^7.6.4
+
+  # Charts
+  fl_chart: ^0.66.2
+
+  # Notifications
+  flutter_local_notifications: ^17.0.0
+  timezone: ^0.9.4
+
+  # Background Service
+  flutter_background_service: ^5.0.5
+
+  # Drag & Drop
+  # (không cần package ngoài — Flutter đã có LongPressDraggable sẵn)
+
+  # Localization
+  intl: 0.20.2
+
+  # UI Utilities
+  gap: ^3.0.1
+  cupertino_icons: ^1.0.6
+  uuid: ^4.4.0
+  audioplayers: ^6.6.0
+  table_calendar: ^3.2.0
+  path_provider: ^2.1.4
+  share_plus: ^10.0.0
+  screenshot: ^3.0.0
+  path: ^1.9.1
+  file_picker: ^8.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+  # Hive Code Generation
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.7
+
+  # Testing
+  bloc_test: ^9.1.5
+  mocktail: ^1.0.3
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    # Thư mục âm thanh thông báo (Pomodoro, break,...)
+    - assets/sounds/
+    - assets/fonts/
