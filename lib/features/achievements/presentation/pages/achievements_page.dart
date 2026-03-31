@@ -27,32 +27,42 @@ class AchievementsPage extends StatelessWidget {
         title: Text(l10n.achievementsTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // Thống kê tổng quan
-          _buildProgressHeader(context, unlocked.length, achievements.length, l10n),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Thống kê tổng quan
+            _buildProgressHeader(context, unlocked.length, achievements.length, l10n),
 
-          // GridView 2 cột hiển thị achievements
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 0.85,
+            // GridView 2 cột hiển thị achievements
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  final isSmall = width < 360;
+                  final bottomPad = MediaQuery.of(context).padding.bottom;
+                  final aspect = isSmall ? 0.78 : 0.85;
+
+                  return GridView.builder(
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomPad),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: isSmall ? 10 : 12,
+                      crossAxisSpacing: isSmall ? 10 : 12,
+                      childAspectRatio: aspect,
+                    ),
+                    itemCount: achievements.length,
+                    itemBuilder: (context, index) {
+                      final achievement = index < unlocked.length
+                          ? unlocked[index]
+                          : locked[index - unlocked.length];
+                      return _AchievementCard(achievement: achievement);
+                    },
+                  );
+                },
               ),
-              itemCount: achievements.length,
-              itemBuilder: (context, index) {
-                // Hiển thị unlocked trước, sau đó locked
-                final achievement = index < unlocked.length
-                    ? unlocked[index]
-                    : locked[index - unlocked.length];
-                return _AchievementCard(achievement: achievement);
-              },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -86,11 +96,16 @@ class AchievementsPage extends StatelessWidget {
                 size: 28,
               ),
               const SizedBox(width: 8),
-              Text(
-                '$unlocked / $total ${l10n.totalAchievements}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '$unlocked / $total ${l10n.totalAchievements}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -163,31 +178,37 @@ class _AchievementCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Title
-            Text(
-              achievement.title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: isUnlocked
-                    ? achievement.color
-                    : Colors.grey.shade600,
+            // Title - Tự động thu nhỏ nếu quá dài
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                achievement.title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isUnlocked
+                      ? achievement.color
+                      : Colors.grey.shade600,
+                ),
               ),
             ),
             const SizedBox(height: 4),
 
-            // Description
-            Text(
-              achievement.description,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                color: isUnlocked
-                    ? Colors.grey.shade700
-                    : Colors.grey.shade500,
+            // Description - Tự động thu nhỏ nếu quá dài
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                achievement.description,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isUnlocked
+                      ? Colors.grey.shade700
+                      : Colors.grey.shade500,
+                ),
               ),
             ),
 

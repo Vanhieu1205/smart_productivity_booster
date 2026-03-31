@@ -9,17 +9,13 @@ import '../domain/achievement.dart';
 class AchievementService {
   static const String _boxName = 'achievements_box';
 
-  /// Lazy getter cho box - kiểm tra box đã mở chưa trước khi sử dụng
-  Box? _boxCache;
-
-  Box _getBox() {
-    // Nếu box chưa được cache, thử lấy từ Hive
-    _boxCache ??= Hive.isBoxOpen(_boxName) ? Hive.box(_boxName) : null;
-    return _boxCache!;
+  /// Lấy box - luôn kiểm tra xem box có đang mở không
+  Box<dynamic>? _getBox() {
+    if (Hive.isBoxOpen(_boxName)) {
+      return Hive.box<dynamic>(_boxName);
+    }
+    return null;
   }
-
-  /// Kiểm tra box có đang mở không
-  bool get _isBoxReady => _boxCache != null || Hive.isBoxOpen(_boxName);
 
   /// Khởi tạo box achievements (gọi trong HiveService.openAllBoxes)
   static Future<void> initBox() async {
@@ -28,14 +24,6 @@ class AchievementService {
 
   /// Kiểm tra điều kiện và mở khóa achievements nếu thỏa mãn.
   /// Trả về danh sách achievements mới được unlock.
-  ///
-  /// Các tham số:
-  /// - [totalTasks]: tổng số task đã hoàn thành
-  /// - [totalPomodoros]: tổng số Pomodoros đã hoàn thành
-  /// - [streak]: số ngày streak hiện tại
-  /// - [todayPomos]: số Pomodoros hôm nay
-  /// - [usedAll4]: đã sử dụng cả 4 quadrant hôm nay
-  /// - [hour]: giờ hiện tại (0-23)
   List<Achievement> checkAndUnlock({
     required int totalTasks,
     required int totalPomodoros,
@@ -44,19 +32,16 @@ class AchievementService {
     required bool usedAll4,
     required int hour,
   }) {
-    // Kiểm tra box đã sẵn sàng chưa
-    if (!_isBoxReady) {
+    final box = _getBox();
+    if (box == null) {
       return [];
     }
 
     final newlyUnlocked = <Achievement>[];
-    final box = _getBox();
 
     for (final achievement in allAchievements) {
-      // Bỏ qua nếu đã unlock rồi
       if (_isUnlockedInternal(box, achievement.id)) continue;
 
-      // Kiểm tra điều kiện unlock
       final shouldUnlock = _checkCondition(
         achievement.id,
         totalTasks: totalTasks,
@@ -79,13 +64,11 @@ class AchievementService {
     return newlyUnlocked;
   }
 
-  /// Kiểm tra achievement đã unlock chưa (internal với box parameter)
   bool _isUnlockedInternal(dynamic box, AchievementId id) {
     final data = box.get(id.name);
     return data != null && data['isUnlocked'] == true;
   }
 
-  /// Lưu achievement đã unlock vào Hive (internal với box parameter)
   void _saveAchievementInternal(dynamic box, Achievement achievement) {
     box.put(achievement.id.name, {
       'isUnlocked': true,
@@ -93,7 +76,6 @@ class AchievementService {
     });
   }
 
-  /// Kiểm tra điều kiện cho từng loại achievement
   bool _checkCondition(
     AchievementId id, {
     required int totalTasks,
@@ -127,41 +109,40 @@ class AchievementService {
     }
   }
 
-  /// Kiểm tra achievement đã unlock chưa
   bool isUnlocked(AchievementId id) {
-    if (!_isBoxReady) return false;
     final box = _getBox();
+    if (box == null) return false;
     return _isUnlockedInternal(box, id);
   }
 
-  /// Lấy trạng thái tất cả achievements (kết hợp default + trạng thái từ Hive)
+  /// Lấy trạng thái tất cả achievements
   List<Achievement> getStatus() {
+    final box = _getBox();
+
     return allAchievements.map((a) {
-      if (!_isBoxReady) return a;
-      final box = _getBox();
+      if (box == null) return a;
+
       final data = box.get(a.id.name);
       if (data != null && data['isUnlocked'] == true) {
         final unlockedAtStr = data['unlockedAt'] as String?;
         return a.copyWith(
           isUnlocked: true,
-          unlockedAt: unlockedAtStr != null ? DateTime.parse(unlockedAtStr) : null,
+          unlockedAt: unlockedAtStr != null ? DateTime.tryParse(unlockedAtStr) : null,
         );
       }
       return a;
     }).toList();
   }
 
-  /// Lấy số lượng achievements đã unlock
   int get unlockedCount {
-    if (!_isBoxReady) return 0;
     final box = _getBox();
+    if (box == null) return 0;
     return allAchievements.where((a) => _isUnlockedInternal(box, a.id)).length;
   }
 
-  /// Reset tất cả achievements (dùng cho debug/testing)
   Future<void> resetAll() async {
-    if (!_isBoxReady) return;
     final box = _getBox();
+    if (box == null) return;
     await box.clear();
   }
 }

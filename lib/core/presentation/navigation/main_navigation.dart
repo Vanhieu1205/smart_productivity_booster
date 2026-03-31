@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/navigation/app_router.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../features/eisenhower_matrix/presentation/bloc/eisenhower_bloc.dart';
 import '../../../features/eisenhower_matrix/presentation/bloc/eisenhower_state.dart';
@@ -37,7 +39,19 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
+    return PopScope(
+      // canPop: false → chặn back mặc định, tự mình xử lý
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        // Người dùng nhấn back → hỏi có thoát không
+        final shouldExit = await _showExitDialog(context);
+        if (shouldExit && context.mounted) {
+          // Thoát app
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
       // IndexedStack: render tất cả màn hình nhưng chỉ hiện 1 cái
       // → Không mất state khi chuyển tab (khác PageView)
       body: IndexedStack(
@@ -136,8 +150,32 @@ class _MainNavigationState extends State<MainNavigation> {
           ),
         ],
       ),
+    ),
     );
   }
 
-  // (Giữ nguyên chỗ này trống – logic badge đã được chuyển vào BlocBuilder ở trên)
+  /// Hiển thị dialog hỏi có muốn thoát app không.
+  /// Trả về true nếu người dùng chọn "Có", false nếu "Không".
+  Future<bool> _showExitDialog(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.exitTitle),
+        content: Text(l10n.exitConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
 }

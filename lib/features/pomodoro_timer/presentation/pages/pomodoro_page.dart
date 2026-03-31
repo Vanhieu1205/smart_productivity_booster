@@ -10,6 +10,7 @@ import '../widgets/timer_controls_widget.dart';
 import '../widgets/phase_indicator_widget.dart';
 import '../widgets/white_noise_widget.dart';
 import '../../data/models/pomodoro_session_model.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../../core/widgets/daily_progress_ring.dart';
 import '../../../../features/settings/presentation/bloc/settings_bloc.dart';
 import '../../../../features/settings/presentation/bloc/settings_state.dart';
@@ -19,11 +20,6 @@ import 'package:smart_productivity_booster/l10n/app_localizations.dart';
 // ============================================================
 // POMODORO PAGE – Presentation Layer
 // ============================================================
-//
-// Màn hình chính của Pomodoro Timer.
-//   - BlocListener: lắng nghe PomodoroCompleted để show Snackbar
-//     và gọi NotificationService (chỉ trên mobile, skip trên web)
-//   - BlocBuilder: render UI theo state hiện tại
 
 class PomodoroPage extends StatelessWidget {
   const PomodoroPage({super.key});
@@ -31,7 +27,6 @@ class PomodoroPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<PomodoroTimerBloc, PomodoroState>(
-      // Chỉ lắng nghe khi chuyển sang PomodoroCompleted
       listenWhen: (prev, curr) => curr is PomodoroCompleted,
       listener: (context, state) {
         if (state is PomodoroCompleted) {
@@ -45,20 +40,13 @@ class PomodoroPage extends StatelessWidget {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // XỬ LÝ KHI PHASE HOÀN THÀNH
-  // ────────────────────────────────────────────────────────────────────────────
-
   void _onPhaseCompleted(BuildContext context, PomodoroCompleted state, AppLocalizations l10n) {
-    // Xác định nội dung Snackbar theo pha vừa xong
     final isWorkDone = state.completedType == TimerType.work;
-    final message = isWorkDone
-        ? l10n.pomodoroComplete
-        : l10n.breakComplete;
+    final message = isWorkDone ? l10n.pomodoroComplete : l10n.breakComplete;
 
     final bgColor = isWorkDone
-        ? const Color(0xFF43A047) // Xanh lá – hoàn thành tốt
-        : const Color(0xFF1E88E5); // Xanh dương – kết thúc nghỉ
+        ? const Color(0xFF43A047)
+        : const Color(0xFF1E88E5);
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -78,28 +66,19 @@ class PomodoroPage extends StatelessWidget {
           ),
         ),
       );
-
-    // ── Notification (chỉ trên Android/iOS, không trên Web) ───────────────────
-    // NotificationService.showTimerCompleteNotification không khả dụng trên web.
-    // Sử dụng kDefaultTargetPlatform check để an toàn.
-    // if (!kIsWeb) {
-    //   if (isWorkDone) {
-    //     NotificationService.showTimerCompleteNotification(
-    //       breakMinutes: state.nextType.minutes,
-    //     );
-    //   } else {
-    //     NotificationService.showBreakCompleteNotification();
-    //   }
-    // }
   }
-
-  // ────────────────────────────────────────────────────────────────────────────
-  // BUILD BODY
-  // ────────────────────────────────────────────────────────────────────────────
 
   Widget _buildBody(BuildContext context, PomodoroState state) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+
+    // Responsive values
+    final isSmall = ResponsiveUtils.isVerySmallPhone(context);
+    final isTablet = ResponsiveUtils.isTablet(context);
+    final isLandscape = ResponsiveUtils.isLandscape(context);
+    final horizontalPadding = ResponsiveUtils.horizontalPadding(context);
+    final timerSize = ResponsiveUtils.timerSize(context);
+    final progressSize = isSmall ? 80.0 : (isTablet ? 130.0 : 100.0);
 
     // Màu nền gradient nhẹ theo pha hiện tại
     final phaseColor = _phaseColor(state.currentType);
@@ -115,13 +94,12 @@ class PomodoroPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(l10n.pomodoroTimer),
         centerTitle: true,
-        // Badge tổng số pomodoro hoàn thành trong AppBar
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: EdgeInsets.only(right: isSmall ? 8 : 16),
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: EdgeInsets.symmetric(horizontal: isSmall ? 6 : 10, vertical: isSmall ? 2 : 4),
                 decoration: BoxDecoration(
                   color: phaseColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -130,7 +108,7 @@ class PomodoroPage extends StatelessWidget {
                 child: Text(
                   '${state.completedPomodoros} 🍅',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: isSmall ? 11 : 13,
                     fontWeight: FontWeight.w600,
                     color: phaseColor,
                   ),
@@ -141,7 +119,6 @@ class PomodoroPage extends StatelessWidget {
         ],
       ),
 
-      // Gradient nền rất nhạt để tạo atmosphere theo pha
       backgroundColor: Color.lerp(
         theme.colorScheme.surface,
         phaseColor.withOpacity(0.05),
@@ -149,75 +126,158 @@ class PomodoroPage extends StatelessWidget {
       ),
 
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
+        child: isLandscape
+            ? _buildLandscapeLayout(context, state, l10n, todayPomos, dailyGoal, phaseColor, horizontalPadding, progressSize)
+            : _buildPortraitLayout(context, state, l10n, todayPomos, dailyGoal, phaseColor, horizontalPadding, timerSize, isSmall),
+      ),
+    );
+  }
 
-              // ── DailyProgressRing hiển thị tiến độ hôm nay ────
-              DailyProgressRing(
-                completed: todayPomos,
-                goal: dailyGoal,
-                size: 100,
+  Widget _buildPortraitLayout(
+    BuildContext context,
+    PomodoroState state,
+    AppLocalizations l10n,
+    int todayPomos,
+    int dailyGoal,
+    Color phaseColor,
+    double horizontalPadding,
+    double timerSize,
+    bool isSmall,
+  ) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+      child: Column(
+        children: [
+          SizedBox(height: isSmall ? 12 : 20),
+
+          // ── DailyProgressRing ──
+          DailyProgressRing(
+            completed: todayPomos,
+            goal: dailyGoal,
+            size: isSmall ? 80.0 : 100,
+          ),
+
+          SizedBox(height: isSmall ? 12 : 16),
+
+          // ── Phase Indicator Pills ──
+          PhaseIndicatorWidget(state: state),
+
+          SizedBox(height: isSmall ? 24 : 36),
+
+          // ── Vòng tròn đếm ngược ──
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            transitionBuilder: (child, animation) => ScaleTransition(
+              scale: animation,
+              child: child,
+            ),
+            child: CircularTimerWidget(
+              key: ValueKey(state.currentType),
+              state: state,
+              size: timerSize,
+            ),
+          ),
+
+          SizedBox(height: isSmall ? 24 : 36),
+
+          // ── Tips box ──
+          _PhaseTipsBox(state: state, isSmall: isSmall),
+
+          SizedBox(height: isSmall ? 24 : 32),
+
+          // ── Nút điều khiển ──
+          TimerControlsWidget(state: state),
+
+          SizedBox(height: isSmall ? 8 : 16),
+
+          // ── Nút chế độ tập trung ──
+          TextButton.icon(
+            icon: Icon(Icons.fullscreen, size: isSmall ? 18 : null),
+            label: Text(l10n.focusMode, style: TextStyle(fontSize: isSmall ? 13 : null)),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const FocusModePage(),
+                fullscreenDialog: true,
               ),
+            ),
+          ),
 
-              const SizedBox(height: 16),
+          SizedBox(height: isSmall ? 16 : 24),
 
-              // ── Phase Indicator Pills ────────────────────────
-              PhaseIndicatorWidget(state: state),
+          // ── Tiếng ồn trắng ──
+          const WhiteNoiseWidget(),
 
-              const SizedBox(height: 36),
+          SizedBox(height: isSmall ? 24 : 32),
+        ],
+      ),
+    );
+  }
 
-              // ── Vòng tròn đếm ngược ──────────────────────────
-              // AnimatedSwitcher để slide-in khi phase thay đổi
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 400),
-                transitionBuilder: (child, animation) => ScaleTransition(
-                  scale: animation,
-                  child: child,
-                ),
-                child: CircularTimerWidget(
-                  key: ValueKey(state.currentType), // Re-animate khi đổi pha
+  Widget _buildLandscapeLayout(
+    BuildContext context,
+    PomodoroState state,
+    AppLocalizations l10n,
+    int todayPomos,
+    int dailyGoal,
+    Color phaseColor,
+    double horizontalPadding,
+    double progressSize,
+  ) {
+    return Row(
+      children: [
+        // Left side - Timer
+        Expanded(
+          flex: 2,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                PhaseIndicatorWidget(state: state),
+                const SizedBox(height: 16),
+                CircularTimerWidget(
+                  key: ValueKey(state.currentType),
                   state: state,
                 ),
-              ),
-
-              const SizedBox(height: 36),
-
-              // ── Tips box theo pha ────────────────────────────
-              _PhaseTipsBox(state: state),
-
-              const SizedBox(height: 32),
-
-              // ── Nút điều khiển ────────────────────────────────
-              TimerControlsWidget(state: state),
-
-              const SizedBox(height: 16),
-
-              // ── Nút chế độ tập trung toàn màn hình ─────────
-              TextButton.icon(
-                icon: const Icon(Icons.fullscreen),
-                label: Text(l10n.focusMode),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const FocusModePage(),
-                    fullscreenDialog: true,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // ── Tiếng ồn trắng ──────────────────────────────
-              const WhiteNoiseWidget(),
-
-              const SizedBox(height: 32),
-            ],
+                const SizedBox(height: 24),
+                TimerControlsWidget(state: state),
+              ],
+            ),
           ),
         ),
-      ),
+        // Right side - Progress & Tips
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.all(horizontalPadding),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                DailyProgressRing(
+                  completed: todayPomos,
+                  goal: dailyGoal,
+                  size: progressSize,
+                ),
+                const SizedBox(height: 24),
+                _PhaseTipsBox(state: state),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  icon: const Icon(Icons.fullscreen),
+                  label: Text(l10n.focusMode),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const FocusModePage(),
+                      fullscreenDialog: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const WhiteNoiseWidget(),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -232,7 +292,6 @@ class PomodoroPage extends StatelessWidget {
     }
   }
 
-  /// Đếm số Pomodoro work đã hoàn thành hôm nay từ Hive
   int _getTodayPomodoroCount() {
     try {
       final box = Hive.box<PomodoroSessionModel>('pomodoro_sessions_box');
@@ -264,8 +323,9 @@ class PomodoroPage extends StatelessWidget {
 // ──────────────────────────────────────────────────────────────
 class _PhaseTipsBox extends StatelessWidget {
   final PomodoroState state;
+  final bool isSmall;
 
-  const _PhaseTipsBox({required this.state});
+  const _PhaseTipsBox({required this.state, this.isSmall = false});
 
   @override
   Widget build(BuildContext context) {
@@ -274,7 +334,7 @@ class _PhaseTipsBox extends StatelessWidget {
     final (icon, tip, color) = _tipFor(state, l10n);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: isSmall ? 12 : 16, vertical: isSmall ? 8 : 12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
@@ -282,13 +342,14 @@ class _PhaseTipsBox extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(icon, style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: 12),
+          Text(icon, style: TextStyle(fontSize: isSmall ? 16 : 20)),
+          SizedBox(width: isSmall ? 8 : 12),
           Expanded(
             child: Text(
               tip,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.75),
+                fontSize: isSmall ? 12 : null,
               ),
             ),
           ),

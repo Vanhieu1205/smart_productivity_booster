@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import '../../../../core/utils/responsive_utils.dart';
 import '../../domain/entities/task_entity.dart';
 import '../../domain/entities/quadrant_type.dart';
 import '../../domain/entities/task_label.dart';
@@ -49,7 +49,7 @@ class TaskCardWidget extends StatelessWidget {
           elevation: 8,
           borderRadius: BorderRadius.circular(12),
           child: SizedBox(
-            width: 200,
+            width: ResponsiveUtils.isVerySmallPhone(context) ? 150 : 200,
             child: _buildCardContent(context, color, theme, isDragging: true),
           ),
         ),
@@ -72,13 +72,27 @@ class TaskCardWidget extends StatelessWidget {
     ThemeData theme, {
     bool isDragging = false,
   }) {
+    final isSmall = ResponsiveUtils.isVerySmallPhone(context);
+    final isTablet = ResponsiveUtils.isTablet(context);
+
+    // Responsive values
+    final margin = isSmall ? const EdgeInsets.symmetric(vertical: 2) : const EdgeInsets.symmetric(vertical: 4);
+    final padding = isSmall
+        ? const EdgeInsets.symmetric(horizontal: 4, vertical: 6)
+        : (isTablet ? const EdgeInsets.symmetric(horizontal: 8, vertical: 8) : const EdgeInsets.symmetric(horizontal: 6, vertical: 6));
+    final borderRadius = isSmall ? 8.0 : 12.0;
+    final iconSize = isSmall ? 14.0 : 16.0;
+    final titleFontSize = isSmall ? 11.0 : null;
+    final chipFontSize = isSmall ? 8.0 : 10.0;
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      margin: margin,
+      padding: padding,
       decoration: BoxDecoration(
         color: isDragging
             ? color.withOpacity(0.15)
             : theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(color: color.withOpacity(0.3), width: 1),
         boxShadow: isDragging
             ? [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))]
@@ -101,18 +115,19 @@ class TaskCardWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Tiêu đề – gạch ngang nếu đã hoàn thành
+                // Tiêu đề
                 Text(
                   task.title,
-                  maxLines: 2,
+                  maxLines: isSmall ? 1 : 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                     color: task.isCompleted ? theme.colorScheme.outline : null,
                     fontWeight: FontWeight.w500,
+                    fontSize: titleFontSize,
                   ),
                 ),
-                // Mô tả (nếu có)
+                // Mô tả
                 if (task.description.isNotEmpty)
                   Text(
                     task.description,
@@ -120,21 +135,19 @@ class TaskCardWidget extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.outline,
+                      fontSize: isSmall ? 9 : null,
                     ),
                   ),
-                const SizedBox(height: 4),
+                SizedBox(height: isSmall ? 2 : 4),
 
-                // Hiển thị Chip nhỏ nếu task có nhãn (label)
+                // Chip nhãn
                 if (task.label != null)
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Chip(
                       label: Text(
                         task.label!.name,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.white,
-                        ),
+                        style: TextStyle(fontSize: chipFontSize, color: Colors.white),
                       ),
                       backgroundColor: task.label!.color,
                       padding: EdgeInsets.zero,
@@ -149,7 +162,7 @@ class TaskCardWidget extends StatelessWidget {
           // ── Nút xóa ────────────────────────────────────────
           if (!isDragging)
             IconButton(
-              icon: Icon(Icons.close_rounded, size: 16, color: theme.colorScheme.outline),
+              icon: Icon(Icons.close_rounded, size: iconSize, color: theme.colorScheme.outline),
               visualDensity: VisualDensity.compact,
               tooltip: AppLocalizations.of(context)!.deleteTask,
               onPressed: () => _confirmDelete(context),

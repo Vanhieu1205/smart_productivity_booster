@@ -28,6 +28,11 @@
   "logout": "Logout",
   "logoutConfirm": "Are you sure you want to log out of the application?",
   "logoutCancel": "Cancel",
+  "logoutTitle": "Confirm Logout",
+  "exitTitle": "Confirm Exit",
+  "exitConfirm": "Do you want to exit the app?",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
 
   "eisenhowerMatrix": "Eisenhower Matrix",
   "matrix": "Matrix",
@@ -100,11 +105,11 @@
   "english": "English",
   "about": "About",
   "appVersion": "Version",
-  "developerName": "Student Name: [Your Name]",
+  "developerName": "Student Name: Pham Van Hieu",
   "appName": "Smart Productivity Booster",
   "developedBy": "Developed by",
   "studentId": "Student ID",
-  "graduationProject": "Graduation Project",
+  "graduationProject": "Graduation Internship Project",
   "save": "Save",
   "cancel": "Cancel",
   "done": "Done",
@@ -146,6 +151,21 @@
 
   "achievementsTitle": "Achievements",
   "totalAchievements": "total achievements",
+  "achievementUnlocked": "Achievement Unlocked!",
+  "goToMatrixToComplete": "Go to Matrix page to complete this task",
+  "pomodoroProgress": "Pomodoro: {completed}/{total}",
+  "@pomodoroProgress": {
+    "placeholders": {
+      "completed": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "taskCount": "{count} tasks",
+  "@taskCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
 
   "greetingNight": "Good Night",
   "greetingMorning": "Good Morning",

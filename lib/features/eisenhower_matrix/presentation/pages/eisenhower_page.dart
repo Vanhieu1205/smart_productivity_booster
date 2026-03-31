@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../../core/widgets/skeleton_box.dart';
 import '../../domain/entities/quadrant_type.dart';
 import '../bloc/eisenhower_bloc.dart';
@@ -14,7 +14,6 @@ import 'package:smart_productivity_booster/l10n/app_localizations.dart';
 // ============================================================
 // EISENHOWER PAGE – Presentation Layer
 // ============================================================
-// Màn hình chính hiển thị Ma trận Eisenhower 2×2 và Lịch.
 
 class EisenhowerPage extends StatefulWidget {
   const EisenhowerPage({super.key});
@@ -24,18 +23,23 @@ class EisenhowerPage extends StatefulWidget {
 }
 
 class _EisenhowerPageState extends State<EisenhowerPage> {
-  bool _isCalendarView = false; // Add toggle state
+  bool _isCalendarView = false;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isSmall = ResponsiveUtils.isVerySmallPhone(context);
+    final spacing = isSmall ? 6.0 : 10.0;
+    final padding = isSmall ? 8.0 : 12.0;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_isCalendarView ? l10n.calendarMode : l10n.eisenhowerMatrix),
+        titleTextStyle: TextStyle(fontSize: isSmall ? 16 : null),
         actions: [
           // Nút chuyển đổi View
           IconButton(
-            icon: Icon(_isCalendarView ? Icons.grid_view_rounded : Icons.calendar_month_rounded),
+            icon: Icon(_isCalendarView ? Icons.grid_view_rounded : Icons.calendar_month_rounded, size: isSmall ? 20 : null),
             tooltip: _isCalendarView ? l10n.matrixMode : l10n.calendarViewMode,
             onPressed: () {
               setState(() {
@@ -45,7 +49,7 @@ class _EisenhowerPageState extends State<EisenhowerPage> {
           ),
           // Nút làm mới thủ công
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: Icon(Icons.refresh_rounded, size: isSmall ? 20 : null),
             tooltip: l10n.reload,
             onPressed: () => context.read<EisenhowerBloc>().add(const LoadTasks()),
           ),
@@ -54,18 +58,19 @@ class _EisenhowerPageState extends State<EisenhowerPage> {
 
       body: BlocBuilder<EisenhowerBloc, EisenhowerState>(
         builder: (context, state) {
-          // ── Đang tải ─────────────────────────────────────────
+          // ── Đang tải ──
           if (state is EisenhowerLoading) {
             return LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth > 700;
+                final aspectRatio = ResponsiveUtils.quadrantAspectRatio(context);
                 return GridView.builder(
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(padding),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: isWide ? 0.9 : 0.75,
+                    mainAxisSpacing: spacing,
+                    crossAxisSpacing: spacing,
+                    childAspectRatio: isWide ? 0.9 : aspectRatio,
                   ),
                   itemCount: 4,
                   itemBuilder: (_, i) => const QuadrantSkeleton(),
@@ -74,26 +79,26 @@ class _EisenhowerPageState extends State<EisenhowerPage> {
             );
           }
 
-          // ── Có lỗi ────────────────────────────────────────────
+          // ── Có lỗi ──
           if (state is EisenhowerError) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(isSmall ? 16 : 24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 56, color: Colors.redAccent),
-                    const SizedBox(height: 12),
+                    Icon(Icons.error_outline, size: isSmall ? 40 : 56, color: Colors.redAccent),
+                    SizedBox(height: isSmall ? 8 : 12),
                     Text(
                       l10n.errorOccurred,
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: isSmall ? 16 : null),
                     ),
-                    const SizedBox(height: 8),
-                    Text(state.message, textAlign: TextAlign.center),
-                    const SizedBox(height: 20),
+                    SizedBox(height: isSmall ? 4 : 8),
+                    Text(state.message, textAlign: TextAlign.center, style: TextStyle(fontSize: isSmall ? 12 : null)),
+                    SizedBox(height: isSmall ? 12 : 20),
                     FilledButton.icon(
                       onPressed: () => context.read<EisenhowerBloc>().add(const LoadTasks()),
-                      icon: const Icon(Icons.refresh_rounded),
+                      icon: Icon(Icons.refresh_rounded, size: isSmall ? 16 : null),
                       label: Text(l10n.retry),
                     ),
                   ],
@@ -102,7 +107,7 @@ class _EisenhowerPageState extends State<EisenhowerPage> {
             );
           }
 
-          // ── Dữ liệu đã tải xong ───────────────────────────────
+          // ── Dữ liệu đã tải xong ──
           if (state is EisenhowerLoaded) {
             if (_isCalendarView) {
               return CalendarViewWidget(tasksByQuadrant: state.tasksByQuadrant);
@@ -110,24 +115,23 @@ class _EisenhowerPageState extends State<EisenhowerPage> {
             return _EisenhowerGrid(state: state);
           }
 
-          // ── Trạng thái khởi tạo (EisenhowerInitial) ──────────
+          // ── Trạng thái khởi tạo (EisenhowerInitial) ──
           return Center(child: Text(l10n.initializing));
         },
       ),
 
-      // FAB mở dialog thêm task mới với quadrant mặc định Q1 (DoIt)
+      // FAB mở dialog thêm task mới
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'eisenhower_fab',
         onPressed: () => showDialog(
           context: context,
           builder: (_) => BlocProvider.value(
-            // Truyền BLoC hiện tại vào dialog (không tạo instance mới)
             value: context.read<EisenhowerBloc>(),
             child: const AddTaskDialog(initialQuadrant: QuadrantType.doIt),
           ),
         ),
-        icon: const Icon(Icons.add_rounded),
-        label: Text(l10n.addTask),
+        icon: Icon(Icons.add_rounded, size: isSmall ? 20 : null),
+        label: Text(l10n.addTask, style: TextStyle(fontSize: isSmall ? 13 : null)),
       ),
     );
   }
@@ -143,6 +147,10 @@ class _EisenhowerGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSmall = ResponsiveUtils.isVerySmallPhone(context);
+    final spacing = isSmall ? 6.0 : 10.0;
+    final padding = isSmall ? 8.0 : 12.0;
+
     // Thứ tự hiển thị: Q1 (trên-trái), Q2 (trên-phải), Q3 (dưới-trái), Q4 (dưới-phải)
     final quadrantOrder = [
       QuadrantType.doIt,
@@ -153,17 +161,20 @@ class _EisenhowerGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Trên màn hình rộng (tablet/web) → tăng tỷ lệ ô
-        final isWide = constraints.maxWidth > 700;
+        // Tính aspect ratio theo đúng kích thước còn lại để 4 ô bằng nhau và "full màn".
+        final availableWidth = constraints.maxWidth - (padding * 2) - spacing;
+        final availableHeight = constraints.maxHeight - (padding * 2) - spacing;
+        final tileWidth = availableWidth / 2;
+        final tileHeight = availableHeight / 2;
+        final aspectRatio = (tileHeight <= 0) ? 0.75 : (tileWidth / tileHeight);
 
         return GridView.builder(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(padding),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            // Tỷ lệ cao hơn trên màn hình rộng để có nhiều chỗ cho tasks
-            childAspectRatio: isWide ? 0.9 : 0.75,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: aspectRatio,
           ),
           itemCount: 4,
           itemBuilder: (_, i) {

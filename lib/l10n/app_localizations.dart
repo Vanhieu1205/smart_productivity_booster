@@ -242,6 +242,36 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get logoutCancel;
 
+  /// No description provided for @logoutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Logout'**
+  String get logoutTitle;
+
+  /// No description provided for @exitTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Exit'**
+  String get exitTitle;
+
+  /// No description provided for @exitConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to exit the app?'**
+  String get exitConfirm;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
   /// No description provided for @eisenhowerMatrix.
   ///
   /// In en, this message translates to:
@@ -653,7 +683,7 @@ abstract class AppLocalizations {
   /// No description provided for @developerName.
   ///
   /// In en, this message translates to:
-  /// **'Student Name: [Your Name]'**
+  /// **'Student Name: Pham Van Hieu'**
   String get developerName;
 
   /// No description provided for @appName.
@@ -677,7 +707,7 @@ abstract class AppLocalizations {
   /// No description provided for @graduationProject.
   ///
   /// In en, this message translates to:
-  /// **'Graduation Project'**
+  /// **'Graduation Internship Project'**
   String get graduationProject;
 
   /// No description provided for @save.
@@ -686,23 +716,11 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get save;
 
-  /// No description provided for @cancel.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel'**
-  String get cancel;
-
   /// No description provided for @done.
   ///
   /// In en, this message translates to:
   /// **'Done'**
   String get done;
-
-  /// No description provided for @confirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm'**
-  String get confirm;
 
   /// No description provided for @error.
   ///
@@ -913,6 +931,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'total achievements'**
   String get totalAchievements;
+
+  /// No description provided for @achievementUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievement Unlocked!'**
+  String get achievementUnlocked;
+
+  /// No description provided for @goToMatrixToComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Matrix page to complete this task'**
+  String get goToMatrixToComplete;
+
+  /// No description provided for @pomodoroProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Pomodoro: {completed}/{total}'**
+  String pomodoroProgress(int completed, int total);
+
+  /// No description provided for @taskCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tasks'**
+  String taskCount(int count);
 
   /// No description provided for @greetingNight.
   ///

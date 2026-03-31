@@ -1,11 +1,11 @@
 {
-    "name": "smart_productivity_booster",
-    "short_name": "smart_productivity_booster",
+    "name": "Smart Productivity Booster",
+    "short_name": "Productivity",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#673AB7",
+    "description": "Ứng dụng quản lý thời gian và tối ưu hiệu suất cá nhân.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

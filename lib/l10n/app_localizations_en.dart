@@ -85,6 +85,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logoutCancel => 'Cancel';
 
   @override
+  String get logoutTitle => 'Confirm Logout';
+
+  @override
+  String get exitTitle => 'Confirm Exit';
+
+  @override
+  String get exitConfirm => 'Do you want to exit the app?';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
   String get eisenhowerMatrix => 'Eisenhower Matrix';
 
   @override
@@ -289,7 +304,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appVersion => 'Version';
 
   @override
-  String get developerName => 'Student Name: [Your Name]';
+  String get developerName => 'Student Name: Pham Van Hieu';
 
   @override
   String get appName => 'Smart Productivity Booster';
@@ -301,19 +316,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get studentId => 'Student ID';
 
   @override
-  String get graduationProject => 'Graduation Project';
+  String get graduationProject => 'Graduation Internship Project';
 
   @override
   String get save => 'Save';
 
   @override
-  String get cancel => 'Cancel';
-
-  @override
   String get done => 'Done';
-
-  @override
-  String get confirm => 'Confirm';
 
   @override
   String get error => 'Error';
@@ -419,6 +428,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get totalAchievements => 'total achievements';
+
+  @override
+  String get achievementUnlocked => 'Achievement Unlocked!';
+
+  @override
+  String get goToMatrixToComplete => 'Go to Matrix page to complete this task';
+
+  @override
+  String pomodoroProgress(int completed, int total) {
+    return 'Pomodoro: $completed/$total';
+  }
+
+  @override
+  String taskCount(int count) {
+    return '$count tasks';
+  }
 
   @override
   String get greetingNight => 'Good Night';

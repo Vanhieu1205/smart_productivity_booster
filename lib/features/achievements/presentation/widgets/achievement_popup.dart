@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import '../../../../main.dart';
 import '../../domain/achievement.dart';
 
@@ -11,24 +13,46 @@ import '../../domain/achievement.dart';
 
 class AchievementPopup {
   /// Hiển thị popup achievement
-  /// Sử dụng GlobalKey để truy cập Navigator từ bất kỳ đâu
   static void show(Achievement achievement) {
     // Lấy context từ NavigatorState
-    final context = achievementNavigatorKey.currentContext;
-    if (context == null) return;
+    final navigatorState = achievementNavigatorKey.currentState;
+    if (navigatorState == null) {
+      debugPrint('AchievementPopup: NavigatorState is null');
+      return;
+    }
 
-    final overlay = Overlay.of(context);
+    // Sử dụng SchedulerBinding thay vì WidgetsBinding
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!navigatorState.mounted) return;
 
-    late OverlayEntry overlayEntry;
+      try {
+        final context = navigatorState.context;
 
-    overlayEntry = OverlayEntry(
-      builder: (context) => _AchievementPopupWidget(
-        achievement: achievement,
-        onDismiss: () => overlayEntry.remove(),
-      ),
-    );
+        // Lấy Overlay từ context
+        final overlay = Overlay.of(context, rootOverlay: true);
 
-    overlay.insert(overlayEntry);
+        // Lấy localized text
+        final isVietnamese = PlatformDispatcher.instance.locale.languageCode == 'vi';
+        final unlockedText = isVietnamese ? '🎉 Đã mở khóa thành tựu!' : '🎉 Achievement Unlocked!';
+
+        late OverlayEntry overlayEntry;
+
+        overlayEntry = OverlayEntry(
+          builder: (context) => _AchievementPopupWidget(
+            achievement: achievement,
+            unlockedText: unlockedText,
+            onDismiss: () {
+              overlayEntry.remove();
+            },
+          ),
+        );
+
+        overlay.insert(overlayEntry);
+      } catch (e, stackTrace) {
+        debugPrint('AchievementPopup error: $e');
+        debugPrint('Stack trace: $stackTrace');
+      }
+    });
   }
 }
 
@@ -38,10 +62,12 @@ class AchievementPopup {
 
 class _AchievementPopupWidget extends StatefulWidget {
   final Achievement achievement;
+  final String unlockedText;
   final VoidCallback onDismiss;
 
   const _AchievementPopupWidget({
     required this.achievement,
+    required this.unlockedText,
     required this.onDismiss,
   });
 
@@ -64,12 +90,13 @@ class _AchievementPopupWidgetState extends State<_AchievementPopupWidget> {
   @override
   Widget build(BuildContext context) {
     final achievement = widget.achievement;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return Positioned(
-      bottom: MediaQuery.of(context).padding.bottom + 80,
-      left: 20,
-      right: 20,
-      child: Center(
+    return SafeArea(
+      child: Positioned(
+        bottom: bottomPadding + 16,
+        left: 16,
+        right: 16,
         child: TweenAnimationBuilder<double>(
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeOutBack,
@@ -83,22 +110,22 @@ class _AchievementPopupWidgetState extends State<_AchievementPopupWidget> {
           child: Material(
             color: Colors.transparent,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
                     achievement.color,
-                    achievement.color.withOpacity(0.8),
+                    achievement.color.withAlpha(200),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: achievement.color.withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                    color: achievement.color.withAlpha(100),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -107,48 +134,52 @@ class _AchievementPopupWidgetState extends State<_AchievementPopupWidget> {
                 children: [
                   // Icon achievement
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.white.withAlpha(50),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       achievement.icon,
                       color: Colors.white,
-                      size: 32,
+                      size: 24,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   // Nội dung
-                  Flexible(
+                  Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          '🎉 Achievement Unlocked!',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
                         Text(
-                          achievement.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                          widget.unlockedText,
+                          style: TextStyle(
+                            color: Colors.white.withAlpha(180),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          achievement.description,
+                          achievement.title,
                           style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          achievement.description,
+                          style: TextStyle(
+                            color: Colors.white.withAlpha(180),
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),

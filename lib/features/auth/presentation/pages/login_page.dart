@@ -17,12 +17,16 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -69,7 +73,13 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            // Khi đăng nhập thành công, chuyển hướng vào màn chính
+            // Khi đăng nhập thành công: thông báo + chuyển hướng vào màn chính
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Đăng nhập thành công!'),
+                backgroundColor: Colors.green,
+              ),
+            );
             Navigator.pushReplacementNamed(context, AppRouter.main);
           } else if (state is AuthError) {
             // Nếu có lỗi, hiển thị SnackBar
@@ -123,7 +133,9 @@ class _LoginPageState extends State<LoginPage> {
                     // TextFormField Email
                     TextFormField(
                       controller: _emailController,
+                      focusNode: _emailFocusNode,
                       keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
                         labelText: l10n.loginEmail,
                         prefixIcon: const Icon(Icons.email_outlined),
@@ -132,13 +144,18 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       validator: _validateEmail,
+                      onFieldSubmitted: (_) {
+                        FocusScope.of(context).requestFocus(_passwordFocusNode);
+                      },
                     ),
                     const SizedBox(height: 16),
 
                     // TextFormField Mật khẩu với Obscure Toggle
                     TextFormField(
                       controller: _passwordController,
+                      focusNode: _passwordFocusNode,
                       obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.done,
                       decoration: InputDecoration(
                         labelText: l10n.loginPassword,
                         prefixIcon: const Icon(Icons.lock_outline),
@@ -157,6 +174,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       validator: _validatePassword,
+                      onFieldSubmitted: (_) => _onLogin(),
                     ),
                     const SizedBox(height: 32),
 

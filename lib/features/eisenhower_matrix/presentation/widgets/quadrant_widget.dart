@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import '../../../../core/utils/responsive_utils.dart';
 import '../../domain/entities/task_entity.dart';
 import '../../domain/entities/quadrant_type.dart';
 import '../bloc/eisenhower_bloc.dart';
@@ -50,6 +50,7 @@ class _QuadrantWidgetState extends State<QuadrantWidget> {
   Widget build(BuildContext context) {
     final q = widget.quadrant;
     final completedCount = widget.tasks.where((t) => t.isCompleted).length;
+    final isSmall = ResponsiveUtils.isVerySmallPhone(context);
 
     return DragTarget<TaskEntity>(
       // Chấp nhận tất cả TaskEntity trừ task đã thuộc quadrant này
@@ -102,7 +103,7 @@ class _QuadrantWidgetState extends State<QuadrantWidget> {
                 child: widget.tasks.isEmpty
                     ? _EmptyQuadrant(quadrant: q, isDragOver: _isDragOver)
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                        padding: EdgeInsets.fromLTRB(isSmall ? 4 : 8, 0, isSmall ? 4 : 8, 8),
                         itemCount: widget.tasks.length,
                         itemBuilder: (_, i) => TaskCardWidget(task: widget.tasks[i]),
                       ),
@@ -138,12 +139,20 @@ class _QuadrantHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+    final isSmall = ResponsiveUtils.isVerySmallPhone(context);
+
+    // Responsive values
+    final headerPadding = isSmall ? const EdgeInsets.symmetric(horizontal: 8, vertical: 6) : const EdgeInsets.symmetric(horizontal: 12, vertical: 10);
+    final iconSize = isSmall ? 14.0 : 18.0;
+    final titleFontSize = isSmall ? 12.0 : null;
+    final descFontSize = isSmall ? 8.0 : 10.0;
+    final counterFontSize = isSmall ? 9.0 : 11.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: headerPadding,
           decoration: BoxDecoration(
             color: quadrant.color.withOpacity(isDragOver ? 0.25 : 0.12),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
@@ -151,8 +160,8 @@ class _QuadrantHeader extends StatelessWidget {
           child: Row(
             children: [
               // Icon đại diện
-              Icon(quadrant.icon, size: 18, color: quadrant.color),
-              const SizedBox(width: 8),
+              Icon(quadrant.icon, size: iconSize, color: quadrant.color),
+              SizedBox(width: isSmall ? 4 : 8),
 
               // Tên quadrant + mô tả
               Expanded(
@@ -164,25 +173,26 @@ class _QuadrantHeader extends StatelessWidget {
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: quadrant.color,
                         fontWeight: FontWeight.w700,
+                        fontSize: titleFontSize,
                       ),
                     ),
                     Text(
                       quadrant.description,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: quadrant.color.withOpacity(0.7),
-                        fontSize: 10,
+                        fontSize: descFontSize,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // Thống kê số task hoàn thành / tổng số task trong quadrant
+              // Thống kê số task
               Text(
                 '$completedCount/$totalCount',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white70,
-                  fontSize: 11,
+                  fontSize: counterFontSize,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -190,12 +200,12 @@ class _QuadrantHeader extends StatelessWidget {
           ),
         ),
 
-        // Thanh progress thể hiện tỷ lệ hoàn thành trong quadrant
+        // Thanh progress
         LinearProgressIndicator(
           value: totalCount == 0 ? 0 : completedCount / totalCount,
           backgroundColor: Colors.white24,
           valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-          minHeight: 3,
+          minHeight: isSmall ? 2 : 3,
         ),
       ],
     );
@@ -214,21 +224,25 @@ class _EmptyQuadrant extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isSmall = ResponsiveUtils.isVerySmallPhone(context);
+    final iconSize = isSmall ? 24.0 : 32.0;
+    final fontSize = isSmall ? 10.0 : 12.0;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             isDragOver ? Icons.add_circle_outline_rounded : Icons.inbox_outlined,
-            size: 32,
+            size: iconSize,
             color: quadrant.color.withOpacity(isDragOver ? 0.8 : 0.3),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: isSmall ? 4 : 6),
           Text(
             isDragOver ? l10n.dropTaskHere : l10n.noTask,
             style: TextStyle(
               color: quadrant.color.withOpacity(isDragOver ? 0.8 : 0.4),
-              fontSize: 12,
+              fontSize: fontSize,
             ),
           ),
         ],
@@ -248,6 +262,11 @@ class _AddTaskButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isSmall = ResponsiveUtils.isVerySmallPhone(context);
+    final iconSize = isSmall ? 14.0 : 16.0;
+    final fontSize = isSmall ? 10.0 : 12.0;
+    final verticalPadding = isSmall ? 4.0 : 6.0;
+
     return TextButton.icon(
       onPressed: () => showDialog(
         context: context,
@@ -256,13 +275,13 @@ class _AddTaskButton extends StatelessWidget {
           child: AddTaskDialog(initialQuadrant: quadrant),
         ),
       ),
-      icon: Icon(Icons.add_rounded, size: 16, color: quadrant.color),
+      icon: Icon(Icons.add_rounded, size: iconSize, color: quadrant.color),
       label: Text(
         l10n.addTask,
-        style: TextStyle(color: quadrant.color, fontSize: 12),
+        style: TextStyle(color: quadrant.color, fontSize: fontSize),
       ),
       style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        padding: EdgeInsets.symmetric(vertical: verticalPadding),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
         ),

@@ -28,6 +28,11 @@
   "logout": "Đăng xuất",
   "logoutConfirm": "Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?",
   "logoutCancel": "Hủy",
+  "logoutTitle": "Xác nhận đăng xuất",
+  "exitTitle": "Xác nhận thoát",
+  "exitConfirm": "Bạn có muốn thoát ứng dụng không?",
+  "cancel": "Hủy",
+  "confirm": "Xác nhận",
 
   "eisenhowerMatrix": "Ma trận Eisenhower",
   "matrix": "Ma trận",
@@ -100,11 +105,11 @@
   "english": "English",
   "about": "Về ứng dụng",
   "appVersion": "Phiên bản",
-  "developerName": "Tên Sinh Viên: [Tên của bạn]",
+  "developerName": "Tên Sinh Viên: Phạm Văn Hiệu",
   "appName": "Smart Productivity Booster",
   "developedBy": "Phát triển bởi",
   "studentId": "Mã số sinh viên",
-  "graduationProject": "Đồ án tốt nghiệp",
+  "graduationProject": "Đồ án thực tập tốt nghiệp",
   "save": "Lưu",
   "cancel": "Hủy",
   "done": "Xong",
@@ -146,6 +151,21 @@
 
   "achievementsTitle": "Thành tựu",
   "totalAchievements": "thành tựu tổng cộng",
+  "achievementUnlocked": "Đã mở khóa thành tựu!",
+  "goToMatrixToComplete": "Vào trang Ma trận để hoàn thành task này",
+  "pomodoroProgress": "Pomodoro: {completed}/{total}",
+  "@pomodoroProgress": {
+    "placeholders": {
+      "completed": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "taskCount": "{count} công việc",
+  "@taskCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
 
   "greetingNight": "Chào buổi tối muộn",
   "greetingMorning": "Chào buổi sáng",

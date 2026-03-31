@@ -19,6 +19,11 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  final _usernameFocusNode = FocusNode();
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+  final _confirmPasswordFocusNode = FocusNode();
   
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -29,6 +34,10 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _usernameFocusNode.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _confirmPasswordFocusNode.dispose();
     super.dispose();
   }
 
@@ -130,6 +139,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   // Tên Hiển thị
                   TextFormField(
                     controller: _usernameController,
+                    focusNode: _usernameFocusNode,
+                    textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
                       labelText: l10n.registerUsername,
                       prefixIcon: const Icon(Icons.person_outline),
@@ -138,13 +149,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     validator: (val) => _validateRequired(val, 'Tên hiển thị'),
+                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_emailFocusNode),
                   ),
                   const SizedBox(height: 16),
 
                   // Email
                   TextFormField(
                     controller: _emailController,
+                    focusNode: _emailFocusNode,
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
                       labelText: l10n.registerEmail,
                       prefixIcon: const Icon(Icons.email_outlined),
@@ -153,13 +167,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     validator: _validateEmail,
+                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_passwordFocusNode),
                   ),
                   const SizedBox(height: 16),
 
                   // Mật khẩu
                   TextFormField(
                     controller: _passwordController,
+                    focusNode: _passwordFocusNode,
                     obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
                       labelText: l10n.registerPassword,
                       prefixIcon: const Icon(Icons.lock_outline),
@@ -176,13 +193,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     validator: _validatePassword,
+                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_confirmPasswordFocusNode),
                   ),
                   const SizedBox(height: 16),
 
                   // Xác nhận Mật khẩu
                   TextFormField(
                     controller: _confirmPasswordController,
+                    focusNode: _confirmPasswordFocusNode,
                     obscureText: _obscureConfirmPassword,
+                    textInputAction: TextInputAction.done,
                     decoration: InputDecoration(
                       labelText: l10n.registerConfirmPassword,
                       prefixIcon: const Icon(Icons.lock_reset_outlined),
@@ -199,6 +219,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     validator: _validateConfirmPassword,
+                    onFieldSubmitted: (_) => _onRegister(),
                   ),
                   const SizedBox(height: 48),
 

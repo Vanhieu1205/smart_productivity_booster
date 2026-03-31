@@ -42,11 +42,8 @@ class _WhiteNoiseWidgetState extends State<WhiteNoiseWidget> {
 
     if (isActive && !_isPlaying) {
       try {
-        // Sử dụng URL âm thanh từ internet cho web
-        // sử dụng file OGG thay vì MP3 vì web hỗ trợ tốt hơn
-        await _audioPlayer.setSourceUrl(
-          'https://cdn.pixabay.com/audio/2022/05/16/audio_460a0a1c15.mp3'
-        );
+        // Sử dụng file nhạc cục bộ từ assets
+        await _audioPlayer.setSource(AssetSource('sounds/chill_rain.mp3'));
         await _audioPlayer.resume();
         _isPlaying = true;
       } catch (e) {

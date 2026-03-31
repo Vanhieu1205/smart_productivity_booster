@@ -26,7 +26,8 @@ class SettingsPage extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.settings, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(l10n.settings,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: false,
       ),
       // Bọc ListView thay vì SingleChildScrollView cho dễ build ListTile
@@ -62,7 +63,8 @@ class SettingsPage extends StatelessWidget {
                 ListTile(
                   leading: CircleAvatar(
                     radius: 28,
-                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.primaryContainer,
                     child: Text(
                       currentUser.avatarInitials,
                       style: TextStyle(
@@ -72,10 +74,9 @@ class SettingsPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  title: Text(
-                    currentUser.username, 
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)
-                  ),
+                  title: Text(currentUser.username,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18)),
                   subtitle: Text(currentUser.email),
                   trailing: const Icon(Icons.edit_outlined),
                   onTap: () {
@@ -110,8 +111,12 @@ class SettingsPage extends StatelessWidget {
                 ),
                 subtitle: Text(l10n.playSoundOnComplete),
                 secondary: Icon(
-                  soundEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-                  color: soundEnabled ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
+                  soundEnabled
+                      ? Icons.volume_up_rounded
+                      : Icons.volume_off_rounded,
+                  color: soundEnabled
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 value: soundEnabled,
                 onChanged: (value) {
@@ -138,7 +143,8 @@ class SettingsPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    const Text('1', style: TextStyle(fontWeight: FontWeight.w500)),
+                    const Text('1',
+                        style: TextStyle(fontWeight: FontWeight.w500)),
                     Expanded(
                       child: Slider(
                         value: dailyGoal.toDouble(),
@@ -148,12 +154,13 @@ class SettingsPage extends StatelessWidget {
                         label: '$dailyGoal',
                         onChanged: (value) {
                           context.read<SettingsBloc>().add(
-                            ChangeDailyPomodoroGoal(value.round()),
-                          );
+                                ChangeDailyPomodoroGoal(value.round()),
+                              );
                         },
                       ),
                     ),
-                    const Text('20', style: TextStyle(fontWeight: FontWeight.w500)),
+                    const Text('20',
+                        style: TextStyle(fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),
@@ -164,7 +171,8 @@ class SettingsPage extends StatelessWidget {
               _buildSectionHeader(context, l10n.streak),
               // Lấy streak hiện tại và kỷ lục từ StreakService
               ListTile(
-                leading: const Icon(Icons.local_fire_department, color: Colors.orange),
+                leading: const Icon(Icons.local_fire_department,
+                    color: Colors.orange),
                 title: Text(
                   l10n.currentStreak,
                   style: const TextStyle(fontWeight: FontWeight.w500),
@@ -233,8 +241,10 @@ class SettingsPage extends StatelessWidget {
               ListTile(
                 leading: const Icon(Icons.school_outlined),
                 title: Text(l10n.developedBy),
-                subtitle: Text('${l10n.developerName}\n${l10n.studentId}: [Mã số của bạn]\n${l10n.graduationProject}'),
-                isThreeLine: true, // Hỗ trợ text dòng dài mà không bị tràn khung
+                subtitle: Text(
+                    '${l10n.developerName}\n${l10n.studentId}: 3120222037\n${l10n.graduationProject}'),
+                isThreeLine:
+                    true, // Hỗ trợ text dòng dài mà không bị tràn khung
               ),
 
               const Divider(height: 32),
@@ -296,7 +306,8 @@ class SettingsPage extends StatelessWidget {
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: Text(
                   l10n.logout,
-                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                      color: Colors.red, fontWeight: FontWeight.w500),
                 ),
                 onTap: () {
                   _showLogoutDialog(context, l10n);
@@ -325,17 +336,19 @@ class SettingsPage extends StatelessWidget {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               Navigator.pop(dialogContext); // Đóng dialog
-              
+
               // Gọi event đăng xuất
               context.read<AuthBloc>().add(LogoutRequested());
-              
+
               // Điều hướng về LoginPage và xóa toàn bộ lịch sử (stack) đằng trước
-              // Giải thích: Navigator.pushNamedAndRemoveUntil(..., (route) => false) 
+              // Giải thích: Navigator.pushNamedAndRemoveUntil(..., (route) => false)
               // giúp đẩy màn hình Đăng nhập (auth) lên và xóa (remove) tất cả các màn hình cũ.
               // Ngăn người dùng không bị "vô tình lọt lại" vào ứng dụng khi bấm nút (Back) ở điện thoại.
-              Navigator.pushNamedAndRemoveUntil(context, AppRouter.auth, (route) => false);
+              Navigator.pushNamedAndRemoveUntil(
+                  context, AppRouter.auth, (route) => false);
             },
-            child: Text(l10n.logout, style: const TextStyle(color: Colors.white)),
+            child:
+                Text(l10n.logout, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -392,7 +405,8 @@ class SettingsPage extends StatelessWidget {
               Navigator.pop(dialogContext);
               _importData(context);
             },
-            child: Text(l10n.continueText, style: const TextStyle(color: Colors.white)),
+            child: Text(l10n.continueText,
+                style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),

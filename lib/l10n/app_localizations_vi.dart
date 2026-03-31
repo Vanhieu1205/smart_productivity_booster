@@ -85,6 +85,21 @@ class AppLocalizationsVi extends AppLocalizations {
   String get logoutCancel => 'Hủy';
 
   @override
+  String get logoutTitle => 'Xác nhận đăng xuất';
+
+  @override
+  String get exitTitle => 'Xác nhận thoát';
+
+  @override
+  String get exitConfirm => 'Bạn có muốn thoát ứng dụng không?';
+
+  @override
+  String get cancel => 'Hủy';
+
+  @override
+  String get confirm => 'Xác nhận';
+
+  @override
   String get eisenhowerMatrix => 'Ma trận Eisenhower';
 
   @override
@@ -292,7 +307,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get appVersion => 'Phiên bản';
 
   @override
-  String get developerName => 'Tên Sinh Viên: [Tên của bạn]';
+  String get developerName => 'Tên Sinh Viên: Phạm Văn Hiệu';
 
   @override
   String get appName => 'Smart Productivity Booster';
@@ -304,19 +319,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get studentId => 'Mã số sinh viên';
 
   @override
-  String get graduationProject => 'Đồ án tốt nghiệp';
+  String get graduationProject => 'Đồ án thực tập tốt nghiệp';
 
   @override
   String get save => 'Lưu';
 
   @override
-  String get cancel => 'Hủy';
-
-  @override
   String get done => 'Xong';
-
-  @override
-  String get confirm => 'Xác nhận';
 
   @override
   String get error => 'Lỗi';
@@ -423,6 +432,22 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get totalAchievements => 'thành tựu tổng cộng';
+
+  @override
+  String get achievementUnlocked => 'Đã mở khóa thành tựu!';
+
+  @override
+  String get goToMatrixToComplete => 'Vào trang Ma trận để hoàn thành task này';
+
+  @override
+  String pomodoroProgress(int completed, int total) {
+    return 'Pomodoro: $completed/$total';
+  }
+
+  @override
+  String taskCount(int count) {
+    return '$count công việc';
+  }
 
   @override
   String get greetingNight => 'Chào buổi tối muộn';
