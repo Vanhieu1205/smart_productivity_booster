@@ -19,14 +19,25 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _answerController = TextEditingController();
 
   final _usernameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
   final _confirmPasswordFocusNode = FocusNode();
-  
+  final _answerFocusNode = FocusNode();
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
+  int _selectedQuestionIndex = 0;
+  static const List<String> _securityQuestions = [
+    'Tên thú cưng đầu tiên của bạn là gì?',
+    'Thành phố bạn sinh ra là gì?',
+    'Tên trường tiểu học của bạn là gì?',
+    'Món ăn yêu thích nhất của bạn là gì?',
+    'Người anh hùng tuổi thơ của bạn là ai?',
+  ];
 
   @override
   void dispose() {
@@ -34,26 +45,30 @@ class _RegisterPageState extends State<RegisterPage> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _answerController.dispose();
     _usernameFocusNode.dispose();
     _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
     _confirmPasswordFocusNode.dispose();
+    _answerFocusNode.dispose();
     super.dispose();
   }
 
   void _onRegister() {
     if (_formKey.currentState!.validate()) {
+      FocusScope.of(context).unfocus();
       context.read<AuthBloc>().add(
-        RegisterRequested(
-          username: _usernameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        ),
-      );
+            RegisterRequested(
+              _usernameController.text.trim(),
+              _emailController.text.trim(),
+              _passwordController.text,
+              _securityQuestions[_selectedQuestionIndex],
+              _answerController.text.trim(),
+            ),
+          );
     }
   }
 
-  // Validate các trường dữ liệu
   String? _validateRequired(String? value, String fieldName) {
     if (value == null || value.trim().isEmpty) {
       return 'Vui lòng nhập $fieldName';
@@ -65,7 +80,8 @@ class _RegisterPageState extends State<RegisterPage> {
     if (value == null || value.trim().isEmpty) {
       return 'Vui lòng nhập Email';
     }
-    final emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+    final emailRegex = RegExp(
+        r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
     if (!emailRegex.hasMatch(value)) {
       return 'Email không hợp lệ';
     }
@@ -107,7 +123,6 @@ class _RegisterPageState extends State<RegisterPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthRegisterSuccess) {
-            // Đăng ký thành công -> Hiện SnackBar và pop về LoginPage
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Đăng ký thành công! Vui lòng đăng nhập.'),
@@ -116,7 +131,8 @@ class _RegisterPageState extends State<RegisterPage> {
             );
             Navigator.pop(context);
           } else if (state is AuthAuthenticated) {
-            Navigator.pushNamedAndRemoveUntil(context, AppRouter.main, (route) => false);
+            Navigator.pushNamedAndRemoveUntil(
+                context, AppRouter.main, (route) => false);
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -128,19 +144,19 @@ class _RegisterPageState extends State<RegisterPage> {
         },
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 16),
-                  
-                  // Tên Hiển thị
                   TextFormField(
                     controller: _usernameController,
                     focusNode: _usernameFocusNode,
                     textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.words,
                     decoration: InputDecoration(
                       labelText: l10n.registerUsername,
                       prefixIcon: const Icon(Icons.person_outline),
@@ -149,11 +165,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     validator: (val) => _validateRequired(val, 'Tên hiển thị'),
-                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_emailFocusNode),
+                    onFieldSubmitted: (_) => _emailFocusNode.requestFocus(),
                   ),
                   const SizedBox(height: 16),
-
-                  // Email
                   TextFormField(
                     controller: _emailController,
                     focusNode: _emailFocusNode,
@@ -167,11 +181,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     validator: _validateEmail,
-                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_passwordFocusNode),
+                    onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
                   ),
                   const SizedBox(height: 16),
-
-                  // Mật khẩu
                   TextFormField(
                     controller: _passwordController,
                     focusNode: _passwordFocusNode,
@@ -181,7 +193,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       labelText: l10n.registerPassword,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                        icon: Icon(_obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined),
                         onPressed: () {
                           setState(() {
                             _obscurePassword = !_obscurePassword;
@@ -193,21 +207,22 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     validator: _validatePassword,
-                    onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_confirmPasswordFocusNode),
+                    onFieldSubmitted: (_) =>
+                        _confirmPasswordFocusNode.requestFocus(),
                   ),
                   const SizedBox(height: 16),
-
-                  // Xác nhận Mật khẩu
                   TextFormField(
                     controller: _confirmPasswordController,
                     focusNode: _confirmPasswordFocusNode,
                     obscureText: _obscureConfirmPassword,
-                    textInputAction: TextInputAction.done,
+                    textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
                       labelText: l10n.registerConfirmPassword,
                       prefixIcon: const Icon(Icons.lock_reset_outlined),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                        icon: Icon(_obscureConfirmPassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined),
                         onPressed: () {
                           setState(() {
                             _obscureConfirmPassword = !_obscureConfirmPassword;
@@ -219,11 +234,52 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     validator: _validateConfirmPassword,
+                    onFieldSubmitted: (_) => _answerFocusNode.requestFocus(),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.securityQuestion,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<int>(
+                    value: _selectedQuestionIndex,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.help_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    items: List.generate(_securityQuestions.length, (index) {
+                      return DropdownMenuItem(
+                        value: index,
+                        child: Text(
+                          _securityQuestions[index],
+                          style: const TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    }),
+                    onChanged: (value) {
+                      setState(() => _selectedQuestionIndex = value ?? 0);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _answerController,
+                    focusNode: _answerFocusNode,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      labelText: l10n.securityAnswer,
+                      prefixIcon: const Icon(Icons.quiz_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    validator: (val) => _validateRequired(val, 'Câu trả lời'),
                     onFieldSubmitted: (_) => _onRegister(),
                   ),
                   const SizedBox(height: 48),
-
-                  // Nút Đăng ký
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (context, state) {
                       return ElevatedButton(
@@ -238,11 +294,13 @@ class _RegisterPageState extends State<RegisterPage> {
                             ? const SizedBox(
                                 height: 24,
                                 width: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : Text(
                                 l10n.registerButton,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                       );
                     },

@@ -137,6 +137,7 @@ void _initAuth() {
       logoutUseCase: sl(),
       checkAuthStatusUseCase: sl(),
       updateUserUseCase: sl(),
+      authRepository: sl(),
     ),
   );
 }

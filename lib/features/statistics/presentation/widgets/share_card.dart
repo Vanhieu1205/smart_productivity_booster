@@ -42,9 +42,9 @@ class ShareCard extends StatelessWidget {
     final List<int> dailyValues = _getDailyValues();
 
     return Container(
-      height: 300, // Fixed height để đảm bảo screenshot đúng kích thước
+      height: 320, // Tăng chiều cao để tránh overflow
       color: ShareCardColors.background,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -53,8 +53,8 @@ class ShareCard extends StatelessWidget {
             children: [
               // Logo đơn giản: Icon Timer
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: ShareCardColors.primary,
                   borderRadius: BorderRadius.circular(8),
@@ -62,22 +62,25 @@ class ShareCard extends StatelessWidget {
                 child: const Icon(
                   Icons.timer,
                   color: ShareCardColors.textWhite,
-                  size: 24,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text(
-                'Smart Productivity Booster',
-                style: TextStyle(
-                  color: ShareCardColors.textWhite,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Smart Productivity Booster',
+                  style: TextStyle(
+                    color: ShareCardColors.textWhite,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
           // Divider trắng mờ
           Container(
@@ -85,18 +88,18 @@ class ShareCard extends StatelessWidget {
             color: ShareCardColors.dividerWhite,
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
           // ===== Tiêu đề Tuần =====
           Text(
             weekLabel,
             style: const TextStyle(
               color: ShareCardColors.textWhite,
-              fontSize: 14,
+              fontSize: 12,
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
 
           // ===== 3 Số Lớn: Pomodoro / Phút / Task =====
           Row(
@@ -108,36 +111,35 @@ class ShareCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
 
           // ===== Mini Chart 7 Cột trắng mờ =====
-          SizedBox(
-            height: 60,
+          Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: List.generate(7, (index) {
                 final value = dailyValues[index];
                 final maxValue = dailyValues.reduce((a, b) => a > b ? a : b);
-                final height = maxValue > 0 ? (value / maxValue) * 50 : 0.0;
+                final height = maxValue > 0 ? (value / maxValue) * 40 : 0.0;
 
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Container(
-                      width: 30,
-                      height: height > 0 ? height : 4,
+                      width: 28,
+                      height: height > 0 ? height : 3,
                       decoration: BoxDecoration(
                         color: ShareCardColors.chartBar,
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       _getDayLabel(index),
                       style: const TextStyle(
                         color: ShareCardColors.dividerWhite,
-                        fontSize: 10,
+                        fontSize: 9,
                       ),
                     ),
                   ],
@@ -146,14 +148,14 @@ class ShareCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
 
           // ===== Streak =====
           Text(
             '🔥 Streak: $streakDays ngày',
             style: const TextStyle(
               color: ShareCardColors.textWhite,
-              fontSize: 14,
+              fontSize: 12,
             ),
           ),
         ],
@@ -167,14 +169,14 @@ class ShareCard extends StatelessWidget {
       children: [
         Text(
           emoji,
-          style: const TextStyle(fontSize: 24),
+          style: const TextStyle(fontSize: 20),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           value,
           style: const TextStyle(
             color: ShareCardColors.textWhite,
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -182,7 +184,7 @@ class ShareCard extends StatelessWidget {
           label,
           style: const TextStyle(
             color: ShareCardColors.dividerWhite,
-            fontSize: 12,
+            fontSize: 10,
           ),
         ),
       ],

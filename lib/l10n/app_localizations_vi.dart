@@ -54,6 +54,29 @@ class AppLocalizationsVi extends AppLocalizations {
   String get loginNoAccount => 'Chưa có tài khoản? Đăng ký ngay';
 
   @override
+  String get loginForgotPassword => 'Quên mật khẩu?';
+
+  @override
+  String get forgotPasswordTitle => 'Quên Mật Khẩu';
+
+  @override
+  String get forgotPasswordDesc =>
+      'Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn một liên kết để đặt lại mật khẩu.';
+
+  @override
+  String get forgotPasswordEmail => 'Địa chỉ email';
+
+  @override
+  String get forgotPasswordButton => 'Gửi liên kết đặt lại';
+
+  @override
+  String get forgotPasswordBack => 'Quay lại đăng nhập';
+
+  @override
+  String get forgotPasswordSuccess =>
+      'Đã gửi liên kết đặt lại! Vui lòng kiểm tra email của bạn.';
+
+  @override
   String get registerTitle => 'Đăng ký tài khoản';
 
   @override
@@ -73,6 +96,9 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get registerHasAccount => 'Đã có tài khoản? Đăng nhập';
+
+  @override
+  String get welcomeSpb => 'Welcome SPB';
 
   @override
   String get logout => 'Đăng xuất';
@@ -155,6 +181,36 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get cannotBeEmpty => 'Trường này không được để trống';
+
+  @override
+  String get invalidEmail => 'Định dạng email không hợp lệ';
+
+  @override
+  String get passwordMinLength => 'Mật khẩu phải có ít nhất 6 ký tự';
+
+  @override
+  String get passwordMismatch => 'Mật khẩu không khớp';
+
+  @override
+  String get securityQuestion => 'Câu hỏi bí mật';
+
+  @override
+  String get securityAnswer => 'Câu trả lời';
+
+  @override
+  String get verifySecurityQuestion => 'Trả lời câu hỏi bí mật';
+
+  @override
+  String get verifyButton => 'Xác nhận';
+
+  @override
+  String get resetPasswordTitle => 'Đặt lại mật khẩu';
+
+  @override
+  String get resetPasswordDesc => 'Nhập mật khẩu mới của bạn';
+
+  @override
+  String get resetPasswordButton => 'Đặt lại mật khẩu';
 
   @override
   String get classify => 'Phân loại';
@@ -468,6 +524,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get greetingLateNight => 'Chào buổi tối muộn';
 
   @override
+  String get welcomeLabel => 'Chào mừng';
+
+  @override
   String get calendarMode => 'Chế độ lịch';
 
   @override
@@ -499,6 +558,30 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get dueDate => 'Ngày hết hạn';
+
+  @override
+  String get dueTime => 'Giờ hết hạn';
+
+  @override
+  String get dueDateTime => 'Ngày & Giờ';
+
+  @override
+  String get selectDate => 'Chọn ngày';
+
+  @override
+  String get selectTime => 'Chọn giờ';
+
+  @override
+  String get selectDateTime => 'Chọn ngày và giờ';
+
+  @override
+  String todayOnly(String hour, String minute) {
+    return 'Hôm nay ($hour:$minute)';
+  }
+
+  @override
+  String get dueDateInfo =>
+      'Làm ngay: chỉ chọn giờ trong ngày. Các tab khác: chọn ngày và giờ';
 
   @override
   String get notes => 'Ghi chú';

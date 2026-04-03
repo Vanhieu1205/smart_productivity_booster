@@ -16,6 +16,14 @@
   "loginPassword": "Password",
   "loginButton": "Login",
   "loginNoAccount": "Don't have an account? Register now",
+  "loginForgotPassword": "Forgot password?",
+
+  "forgotPasswordTitle": "Forgot Password",
+  "forgotPasswordDesc": "Enter your email address and we'll send you a link to reset your password.",
+  "forgotPasswordEmail": "Email address",
+  "forgotPasswordButton": "Send Reset Link",
+  "forgotPasswordBack": "Back to Login",
+  "forgotPasswordSuccess": "Reset link sent! Please check your email.",
 
   "registerTitle": "Register Account",
   "registerUsername": "Display Name",
@@ -24,6 +32,8 @@
   "registerConfirmPassword": "Confirm Password",
   "registerButton": "Register",
   "registerHasAccount": "Already have an account? Login",
+
+  "welcomeSpb": "Welcome SPB",
 
   "logout": "Logout",
   "logoutConfirm": "Are you sure you want to log out of the application?",
@@ -53,6 +63,16 @@
   "confirmDelete": "Are you sure you want to delete this task?",
   "taskCompleted": "Completed",
   "cannotBeEmpty": "This field cannot be empty",
+  "invalidEmail": "Invalid email format",
+  "passwordMinLength": "Password must be at least 6 characters",
+  "passwordMismatch": "Passwords do not match",
+  "securityQuestion": "Security Question",
+  "securityAnswer": "Security Answer",
+  "verifySecurityQuestion": "Answer Your Security Question",
+  "verifyButton": "Verify",
+  "resetPasswordTitle": "Reset Password",
+  "resetPasswordDesc": "Enter your new password",
+  "resetPasswordButton": "Reset Password",
   "classify": "Classify",
   "taskLabels": "Labels",
   "noLabel": "No Label",
@@ -173,6 +193,7 @@
   "greetingEvening": "Good Evening",
   "greetingLateEvening": "Good Evening",
   "greetingLateNight": "Good Night",
+  "welcomeLabel": "Welcome",
 
   "calendarMode": "Calendar View",
   "matrixMode": "Matrix View",
@@ -186,6 +207,19 @@
   "profileUpdated": "Profile updated successfully",
   "editNotes": "Edit Notes",
   "dueDate": "Due Date",
+  "dueTime": "Due Time",
+  "dueDateTime": "Date & Time",
+  "selectDate": "Select Date",
+  "selectTime": "Select Time",
+  "selectDateTime": "Select Date and Time",
+  "todayOnly": "Today ({hour}:{minute})",
+  "@todayOnly": {
+    "placeholders": {
+      "hour": {"type": "String"},
+      "minute": {"type": "String"}
+    }
+  },
+  "dueDateInfo": "Do It: select time only for today. Other tabs: select date and time",
   "notes": "Notes",
   "noNotesYet": "No notes yet",
   "enterTaskNotes": "Enter task notes..."

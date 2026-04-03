@@ -5,8 +5,11 @@ import 'package:intl/intl.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/utils/streak_service.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/daily_progress_ring.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../../features/eisenhower_matrix/domain/entities/quadrant_type.dart';
 import '../../../../features/eisenhower_matrix/domain/entities/task_entity.dart';
 import '../../../../features/eisenhower_matrix/data/models/task_model.dart';
@@ -28,7 +31,9 @@ class DashboardPage extends StatelessWidget {
     final isSmall = ResponsiveUtils.isVerySmallPhone(context);
     final isTablet = ResponsiveUtils.isTablet(context);
 
-    final greeting = _buildGreeting(now, l10n);
+    final authState = context.watch<AuthBloc>().state;
+    final username = authState is AuthAuthenticated ? authState.user.username : null;
+    final timeGreeting = _buildGreeting(now, l10n);
     final dateText = DateFormat.yMMMMEEEEd('vi').format(now);
 
     final dashboardData = _loadTodayStats(today);
@@ -45,7 +50,14 @@ class DashboardPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.today),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppLogo(size: 32),
+            const SizedBox(width: 8),
+            Text(l10n.today),
+          ],
+        ),
         centerTitle: false,
       ),
       body: SafeArea(
@@ -54,12 +66,25 @@ class DashboardPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Greeting ──
+              // ── Welcome (if logged in) ──
+              if (username != null && username.isNotEmpty) ...[
+                Text(
+                  '${l10n.welcomeLabel} $username!',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: titleSize,
+                  ),
+                ),
+                SizedBox(height: isSmall ? 2 : 4),
+              ],
+
+              // ── Time-based Greeting ──
               Text(
-                greeting,
+                timeGreeting,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: titleSize,
+                  fontSize: username != null ? (isSmall ? 18 : 20) : titleSize,
+                  color: username != null ? theme.colorScheme.onSurface.withOpacity(0.7) : null,
                 ),
               ),
               SizedBox(height: isSmall ? 2 : 4),

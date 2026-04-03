@@ -30,6 +30,18 @@ class UserModel extends UserEntity {
   @HiveField(5)
   final String avatarInitials;
 
+  @override
+  @HiveField(6)
+  final String? securityQuestion;
+
+  @override
+  @HiveField(7)
+  final String? securityAnswer;
+
+  @override
+  @HiveField(8)
+  final String? avatarPath;
+
   const UserModel({
     required this.id,
     required this.username,
@@ -37,6 +49,9 @@ class UserModel extends UserEntity {
     required this.passwordHash,
     required this.createdAt,
     required this.avatarInitials,
+    this.securityQuestion,
+    this.securityAnswer,
+    this.avatarPath,
   }) : super(
           id: id,
           username: username,
@@ -44,6 +59,9 @@ class UserModel extends UserEntity {
           passwordHash: passwordHash,
           createdAt: createdAt,
           avatarInitials: avatarInitials,
+          securityQuestion: securityQuestion,
+          securityAnswer: securityAnswer,
+          avatarPath: avatarPath,
         );
 
   factory UserModel.fromEntity(UserEntity entity) {
@@ -54,12 +72,43 @@ class UserModel extends UserEntity {
       passwordHash: entity.passwordHash,
       createdAt: entity.createdAt,
       avatarInitials: entity.avatarInitials,
+      securityQuestion: entity.securityQuestion,
+      securityAnswer: entity.securityAnswer,
+      avatarPath: entity.avatarPath,
     );
   }
 
-  // Hàm băm mật khẩu đơn giản bằng base64 (Yêu cầu đề tài không cài thêm package ngoại như crypto)
+  UserModel copyWith({
+    String? id,
+    String? username,
+    String? email,
+    String? passwordHash,
+    DateTime? createdAt,
+    String? avatarInitials,
+    String? securityQuestion,
+    String? securityAnswer,
+    String? avatarPath,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      email: email ?? this.email,
+      passwordHash: passwordHash ?? this.passwordHash,
+      createdAt: createdAt ?? this.createdAt,
+      avatarInitials: avatarInitials ?? this.avatarInitials,
+      securityQuestion: securityQuestion ?? this.securityQuestion,
+      securityAnswer: securityAnswer ?? this.securityAnswer,
+      avatarPath: avatarPath ?? this.avatarPath,
+    );
+  }
+
   static String hashPassword(String raw) {
     final bytes = utf8.encode(raw);
+    return base64Encode(bytes);
+  }
+
+  static String hashAnswer(String raw) {
+    final bytes = utf8.encode(raw.toLowerCase().trim());
     return base64Encode(bytes);
   }
 }

@@ -10,18 +10,22 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.localDataSource});
 
   @override
-  Future<UserEntity?> register(String username, String email, String password) async {
-    // 1. Kiểm tra xem email đã tồn tại hay chưa
+  Future<UserEntity?> register(
+    String username,
+    String email,
+    String password,
+    String securityQuestion,
+    String securityAnswer,
+  ) async {
     final existingUser = await localDataSource.getUserByEmail(email);
     if (existingUser != null) {
       throw Exception('Email đã được sử dụng.');
     }
 
-    // 2. Tạo ID mới và hash password
     final id = const Uuid().v4();
     final passwordHash = UserModel.hashPassword(password);
+    final answerHash = UserModel.hashAnswer(securityAnswer);
     
-    // Tạo avatarInitials (2 chữ cái đầu)
     String initials = '';
     if (username.isNotEmpty) {
       final parts = username.trim().split(' ');
@@ -39,15 +43,16 @@ class AuthRepositoryImpl implements AuthRepository {
       passwordHash: passwordHash,
       createdAt: DateTime.now(),
       avatarInitials: initials,
+      securityQuestion: securityQuestion,
+      securityAnswer: answerHash,
     );
 
-    // 3. Lưu vào Hive Local
     await localDataSource.createUser(newUser);
     return newUser;
   }
 
   @override
-  Future<UserEntity?> updateUser({String? newUsername}) async {
+  Future<UserEntity?> updateUser({String? newUsername, String? newAvatarPath}) async {
     final currentUserId = await localDataSource.getCurrentSession();
     if (currentUserId == null) throw Exception('Người dùng chưa đăng nhập');
 
@@ -56,7 +61,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
     final updatedUsername = newUsername ?? currentUser.username;
     
-    // Tạo lại avatar initials nếu có đổi tên
     String initials = currentUser.avatarInitials;
     if (newUsername != null && newUsername.isNotEmpty) {
       final parts = newUsername.trim().split(' ');
@@ -67,6 +71,9 @@ class AuthRepositoryImpl implements AuthRepository {
       }
     }
 
+    // Use newAvatarPath if provided, otherwise keep the current one
+    final updatedAvatarPath = newAvatarPath ?? currentUser.avatarPath;
+
     final updatedUser = UserModel(
       id: currentUser.id,
       username: updatedUsername,
@@ -74,6 +81,9 @@ class AuthRepositoryImpl implements AuthRepository {
       passwordHash: currentUser.passwordHash,
       createdAt: currentUser.createdAt,
       avatarInitials: initials,
+      securityQuestion: currentUser.securityQuestion,
+      securityAnswer: currentUser.securityAnswer,
+      avatarPath: updatedAvatarPath,
     );
 
     await localDataSource.updateUser(updatedUser);
@@ -82,19 +92,16 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserEntity?> login(String email, String password) async {
-    // 1. Tìm user theo Email trong Hive
     final user = await localDataSource.getUserByEmail(email);
     if (user == null) {
       throw Exception('Tài khoản không tồn tại.');
     }
 
-    // 2. Kiểm tra mật khẩu
     final hash = UserModel.hashPassword(password);
     if (user.passwordHash != hash) {
       throw Exception('Mật khẩu không chính xác.');
     }
 
-    // 3. Đăng nhập thành công, lưu lại current session ID
     await localDataSource.saveCurrentSession(user.id);
     return user;
   }
@@ -117,5 +124,40 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<bool> isLoggedIn() async {
     final currentUserId = await localDataSource.getCurrentSession();
     return currentUserId != null;
+  }
+
+  @override
+  Future<String?> getSecurityQuestion(String email) async {
+    final user = await localDataSource.getUserByEmail(email);
+    if (user == null) return null;
+    return user.securityQuestion;
+  }
+
+  @override
+  Future<bool> verifySecurityAnswer(String email, String answer) async {
+    final user = await localDataSource.getUserByEmail(email);
+    if (user == null) return false;
+    final answerHash = UserModel.hashAnswer(answer);
+    return user.securityAnswer == answerHash;
+  }
+
+  @override
+  Future<void> resetPassword(String email, String newPassword) async {
+    final user = await localDataSource.getUserByEmail(email);
+    if (user == null) throw Exception('Tài khoản không tồn tại.');
+
+    final newHash = UserModel.hashPassword(newPassword);
+    final updatedUser = UserModel(
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      passwordHash: newHash,
+      createdAt: user.createdAt,
+      avatarInitials: user.avatarInitials,
+      securityQuestion: user.securityQuestion,
+      securityAnswer: user.securityAnswer,
+    );
+
+    await localDataSource.updateUser(updatedUser);
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../features/splash/splash_screen.dart';
 import '../presentation/navigation/main_navigation.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
-import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/auth_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/profile_page.dart';
 import '../../features/achievements/presentation/pages/achievements_page.dart';
@@ -30,7 +30,7 @@ class AppRouter {
       case onboarding:
         return MaterialPageRoute(builder: (_) => const OnboardingPage());
       case auth:
-        return MaterialPageRoute(builder: (_) => const LoginPage()); // AuthPage cũ đổi thành LoginPage
+        return MaterialPageRoute(builder: (_) => const AuthPage());
       case register:
         return MaterialPageRoute(builder: (_) => const RegisterPage());
       case profile:

@@ -44,12 +44,17 @@ dependencies:
   cupertino_icons: ^1.0.6
   uuid: ^4.4.0
   audioplayers: ^6.6.0
+
+  # Wakelock - Giữ màn hình sáng trong chế độ tập trung
+  wakelock_plus: ^1.2.5
+
   table_calendar: ^3.2.0
   path_provider: ^2.1.4
   share_plus: ^10.0.0
   screenshot: ^3.0.0
   path: ^1.9.1
   file_picker: ^8.0.0
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

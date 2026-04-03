@@ -10,6 +10,7 @@ import '../../../auth/domain/entities/user_entity.dart';
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/utils/streak_service.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../data/services/backup_service.dart';
 import 'package:smart_productivity_booster/l10n/app_localizations.dart';
 
@@ -26,8 +27,15 @@ class SettingsPage extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.settings,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppLogo(size: 32),
+            const SizedBox(width: 8),
+            Text(l10n.settings,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
         centerTitle: false,
       ),
       // Bọc ListView thay vì SingleChildScrollView cho dễ build ListTile
@@ -59,32 +67,40 @@ class SettingsPage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 12),
             children: [
               // ===== 0. THÔNG TIN TÀI KHOẢN =====
-              if (currentUser != null) ...[
-                ListTile(
-                  leading: CircleAvatar(
-                    radius: 28,
-                    backgroundColor:
-                        Theme.of(context).colorScheme.primaryContainer,
-                    child: Text(
-                      currentUser.avatarInitials,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  title: Text(currentUser.username,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18)),
-                  subtitle: Text(currentUser.email),
-                  trailing: const Icon(Icons.edit_outlined),
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRouter.profile);
-                  },
+              ListTile(
+                leading: CircleAvatar(
+                  radius: 28,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primaryContainer,
+                  child: currentUser != null
+                      ? Text(
+                          currentUser.avatarInitials,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        )
+                      : Icon(
+                          Icons.person,
+                          size: 28,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                 ),
-                const Divider(height: 32),
-              ],
+                title: Text(
+                  currentUser?.username ?? 'Khách',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                subtitle: Text(currentUser?.email ?? 'Đăng nhập để sử dụng'),
+                trailing: const Icon(Icons.edit_outlined),
+                onTap: () {
+                  Navigator.pushNamed(context, AppRouter.profile);
+                },
+              ),
+              const Divider(height: 32),
 
               // ===== 1. MỤC CẤU HÌNH GIAO DIỆN (THEMES) =====
               _buildSectionHeader(context, l10n.settings),
@@ -125,8 +141,33 @@ class SettingsPage extends StatelessWidget {
               ),
 
               const Divider(height: 32),
+              // ===== 1.5. MỤC CẤU HÌNH NGÔN NGỮ =====
+              _buildSectionHeader(context, l10n.language),
+              RadioListTile<String>(
+                title: Text(l10n.vietnamese),
+                secondary: const Text('🇻🇳', style: TextStyle(fontSize: 24)),
+                value: 'vi',
+                groupValue: languageCode,
+                onChanged: (code) {
+                  if (code != null) {
+                    context.read<SettingsBloc>().add(ChangeLanguage(code));
+                  }
+                },
+              ),
+              RadioListTile<String>(
+                title: Text(l10n.english),
+                secondary: const Text('🇬🇧', style: TextStyle(fontSize: 24)),
+                value: 'en',
+                groupValue: languageCode,
+                onChanged: (code) {
+                  if (code != null) {
+                    context.read<SettingsBloc>().add(ChangeLanguage(code));
+                  }
+                },
+              ),
 
-              // ===== 1.5. MỤC TIÊU POMODORO HÀNG NGÀY =====
+              const Divider(height: 32),
+              // ===== 2. MỤC TIÊU POMODORO HÀNG NGÀY =====
               _buildSectionHeader(context, l10n.pomodoroGoal),
               ListTile(
                 leading: Icon(
@@ -204,51 +245,6 @@ class SettingsPage extends StatelessWidget {
 
               const Divider(height: 32),
 
-              // ===== 2. MỤC CẤU HÌNH NGÔN NGỮ =====
-              _buildSectionHeader(context, l10n.language),
-              RadioListTile<String>(
-                title: Text(l10n.vietnamese),
-                secondary: const Text('🇻🇳', style: TextStyle(fontSize: 24)),
-                value: 'vi',
-                groupValue: languageCode,
-                onChanged: (code) {
-                  if (code != null) {
-                    context.read<SettingsBloc>().add(ChangeLanguage(code));
-                  }
-                },
-              ),
-              RadioListTile<String>(
-                title: Text(l10n.english),
-                secondary: const Text('🇬🇧', style: TextStyle(fontSize: 24)),
-                value: 'en',
-                groupValue: languageCode,
-                onChanged: (code) {
-                  if (code != null) {
-                    context.read<SettingsBloc>().add(ChangeLanguage(code));
-                  }
-                },
-              ),
-
-              const Divider(height: 32),
-
-              // ===== 3. VỀ ỨNG DỤNG (ABOUT / CREDITS) =====
-              _buildSectionHeader(context, l10n.about),
-              ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: Text(l10n.appName),
-                subtitle: Text('${l10n.appVersion}: 1.0.0 (Beta)'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.school_outlined),
-                title: Text(l10n.developedBy),
-                subtitle: Text(
-                    '${l10n.developerName}\n${l10n.studentId}: 3120222037\n${l10n.graduationProject}'),
-                isThreeLine:
-                    true, // Hỗ trợ text dòng dài mà không bị tràn khung
-              ),
-
-              const Divider(height: 32),
-
               // ===== 3.5. THÀNH TỰU (ACHIEVEMENTS) =====
               _buildSectionHeader(context, l10n.achievements),
               ListTile(
@@ -299,7 +295,23 @@ class SettingsPage extends StatelessWidget {
               ),
 
               const Divider(height: 32),
+              // ===== 4. VỀ ỨNG DỤNG (ABOUT / CREDITS) =====
+              _buildSectionHeader(context, l10n.about),
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: Text(l10n.appName),
+                subtitle: Text('${l10n.appVersion}: 1.0.0 (Beta)'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.school_outlined),
+                title: Text(l10n.developedBy),
+                subtitle: Text(
+                    '${l10n.developerName}\n${l10n.studentId}: 3120222037\n${l10n.graduationProject}'),
+                isThreeLine:
+                    true, // Hỗ trợ text dòng dài mà không bị tràn khung
+              ),
 
+              const Divider(height: 32),
               // ===== 5. TÀI KHOẢN =====
               _buildSectionHeader(context, l10n.settings),
               ListTile(

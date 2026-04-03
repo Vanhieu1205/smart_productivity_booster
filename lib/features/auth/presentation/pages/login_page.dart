@@ -32,12 +32,13 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onLogin() {
     if (_formKey.currentState!.validate()) {
+      FocusScope.of(context).unfocus();
       context.read<AuthBloc>().add(
-        LoginRequested(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        ),
-      );
+            LoginRequested(
+              _emailController.text.trim(),
+              _passwordController.text,
+            ),
+          );
     }
   }
 
@@ -46,7 +47,8 @@ class _LoginPageState extends State<LoginPage> {
     if (value == null || value.trim().isEmpty) {
       return 'Vui lòng nhập Email';
     }
-    final emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+    final emailRegex = RegExp(
+        r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
     if (!emailRegex.hasMatch(value)) {
       return 'Email không hợp lệ';
     }
@@ -67,20 +69,26 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            // Khi đăng nhập thành công: thông báo + chuyển hướng vào màn chính
+            // Khi đăng nhập thành công: hiển thị snackbar trước rồi mới chuyển trang
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('Đăng nhập thành công!'),
                 backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
               ),
             );
-            Navigator.pushReplacementNamed(context, AppRouter.main);
+            // Delay để snackbar hiển thị trước khi chuyển trang
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, AppRouter.main);
+              }
+            });
           } else if (state is AuthError) {
             // Nếu có lỗi, hiển thị SnackBar
             ScaffoldMessenger.of(context).showSnackBar(
@@ -94,7 +102,8 @@ class _LoginPageState extends State<LoginPage> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -105,10 +114,11 @@ class _LoginPageState extends State<LoginPage> {
                     Icon(
                       Icons.account_circle_rounded,
                       size: 100,
-                      color: colorScheme.primary, // Sẽ lấy deepPurple nếu cấu hình theme đúng
+                      color: colorScheme
+                          .primary, // Sẽ lấy deepPurple nếu cấu hình theme đúng
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Tiêu đề
                     Text(
                       l10n.loginTitle,
@@ -161,7 +171,9 @@ class _LoginPageState extends State<LoginPage> {
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                           ),
                           onPressed: () {
                             setState(() {
@@ -193,11 +205,14 @@ class _LoginPageState extends State<LoginPage> {
                               ? const SizedBox(
                                   height: 24,
                                   width: 24,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : Text(
                                   l10n.loginButton,
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
                                 ),
                         );
                       },

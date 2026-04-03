@@ -182,6 +182,48 @@ abstract class AppLocalizations {
   /// **'Don\'t have an account? Register now'**
   String get loginNoAccount;
 
+  /// No description provided for @loginForgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get loginForgotPassword;
+
+  /// No description provided for @forgotPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot Password'**
+  String get forgotPasswordTitle;
+
+  /// No description provided for @forgotPasswordDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email address and we\'ll send you a link to reset your password.'**
+  String get forgotPasswordDesc;
+
+  /// No description provided for @forgotPasswordEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get forgotPasswordEmail;
+
+  /// No description provided for @forgotPasswordButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Reset Link'**
+  String get forgotPasswordButton;
+
+  /// No description provided for @forgotPasswordBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Login'**
+  String get forgotPasswordBack;
+
+  /// No description provided for @forgotPasswordSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset link sent! Please check your email.'**
+  String get forgotPasswordSuccess;
+
   /// No description provided for @registerTitle.
   ///
   /// In en, this message translates to:
@@ -223,6 +265,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already have an account? Login'**
   String get registerHasAccount;
+
+  /// No description provided for @welcomeSpb.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome SPB'**
+  String get welcomeSpb;
 
   /// No description provided for @logout.
   ///
@@ -385,6 +433,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This field cannot be empty'**
   String get cannotBeEmpty;
+
+  /// No description provided for @invalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email format'**
+  String get invalidEmail;
+
+  /// No description provided for @passwordMinLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get passwordMinLength;
+
+  /// No description provided for @passwordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordMismatch;
+
+  /// No description provided for @securityQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Security Question'**
+  String get securityQuestion;
+
+  /// No description provided for @securityAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Security Answer'**
+  String get securityAnswer;
+
+  /// No description provided for @verifySecurityQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer Your Security Question'**
+  String get verifySecurityQuestion;
+
+  /// No description provided for @verifyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get verifyButton;
+
+  /// No description provided for @resetPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Password'**
+  String get resetPasswordTitle;
+
+  /// No description provided for @resetPasswordDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your new password'**
+  String get resetPasswordDesc;
+
+  /// No description provided for @resetPasswordButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Password'**
+  String get resetPasswordButton;
 
   /// No description provided for @classify.
   ///
@@ -992,6 +1100,12 @@ abstract class AppLocalizations {
   /// **'Good Night'**
   String get greetingLateNight;
 
+  /// No description provided for @welcomeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome'**
+  String get welcomeLabel;
+
   /// No description provided for @calendarMode.
   ///
   /// In en, this message translates to:
@@ -1057,6 +1171,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Due Date'**
   String get dueDate;
+
+  /// No description provided for @dueTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Due Time'**
+  String get dueTime;
+
+  /// No description provided for @dueDateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Date & Time'**
+  String get dueDateTime;
+
+  /// No description provided for @selectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date'**
+  String get selectDate;
+
+  /// No description provided for @selectTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Time'**
+  String get selectTime;
+
+  /// No description provided for @selectDateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date and Time'**
+  String get selectDateTime;
+
+  /// No description provided for @todayOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Today ({hour}:{minute})'**
+  String todayOnly(String hour, String minute);
+
+  /// No description provided for @dueDateInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Do It: select time only for today. Other tabs: select date and time'**
+  String get dueDateInfo;
 
   /// No description provided for @notes.
   ///

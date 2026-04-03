@@ -16,6 +16,14 @@
   "loginPassword": "Mật khẩu",
   "loginButton": "Đăng nhập",
   "loginNoAccount": "Chưa có tài khoản? Đăng ký ngay",
+  "loginForgotPassword": "Quên mật khẩu?",
+
+  "forgotPasswordTitle": "Quên Mật Khẩu",
+  "forgotPasswordDesc": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn một liên kết để đặt lại mật khẩu.",
+  "forgotPasswordEmail": "Địa chỉ email",
+  "forgotPasswordButton": "Gửi liên kết đặt lại",
+  "forgotPasswordBack": "Quay lại đăng nhập",
+  "forgotPasswordSuccess": "Đã gửi liên kết đặt lại! Vui lòng kiểm tra email của bạn.",
 
   "registerTitle": "Đăng ký tài khoản",
   "registerUsername": "Tên hiển thị",
@@ -24,6 +32,8 @@
   "registerConfirmPassword": "Xác nhận mật khẩu",
   "registerButton": "Đăng ký",
   "registerHasAccount": "Đã có tài khoản? Đăng nhập",
+
+  "welcomeSpb": "Welcome SPB",
 
   "logout": "Đăng xuất",
   "logoutConfirm": "Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?",
@@ -53,6 +63,16 @@
   "confirmDelete": "Bạn có chắc muốn xóa công việc này không?",
   "taskCompleted": "Đã hoàn thành",
   "cannotBeEmpty": "Trường này không được để trống",
+  "invalidEmail": "Định dạng email không hợp lệ",
+  "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
+  "passwordMismatch": "Mật khẩu không khớp",
+  "securityQuestion": "Câu hỏi bí mật",
+  "securityAnswer": "Câu trả lời",
+  "verifySecurityQuestion": "Trả lời câu hỏi bí mật",
+  "verifyButton": "Xác nhận",
+  "resetPasswordTitle": "Đặt lại mật khẩu",
+  "resetPasswordDesc": "Nhập mật khẩu mới của bạn",
+  "resetPasswordButton": "Đặt lại mật khẩu",
   "classify": "Phân loại",
   "taskLabels": "Nhãn",
   "noLabel": "Không nhãn",
@@ -173,6 +193,7 @@
   "greetingEvening": "Chào buổi chiều",
   "greetingLateEvening": "Chào buổi tối",
   "greetingLateNight": "Chào buổi tối muộn",
+  "welcomeLabel": "Chào mừng",
 
   "calendarMode": "Chế độ lịch",
   "matrixMode": "Chế độ ma trận",
@@ -186,6 +207,19 @@
   "profileUpdated": "Cập nhật hồ sơ thành công",
   "editNotes": "Sửa ghi chú",
   "dueDate": "Ngày hết hạn",
+  "dueTime": "Giờ hết hạn",
+  "dueDateTime": "Ngày & Giờ",
+  "selectDate": "Chọn ngày",
+  "selectTime": "Chọn giờ",
+  "selectDateTime": "Chọn ngày và giờ",
+  "todayOnly": "Hôm nay ({hour}:{minute})",
+  "@todayOnly": {
+    "placeholders": {
+      "hour": {"type": "String"},
+      "minute": {"type": "String"}
+    }
+  },
+  "dueDateInfo": "Làm ngay: chỉ chọn giờ trong ngày. Các tab khác: chọn ngày và giờ",
   "notes": "Ghi chú",
   "noNotesYet": "Chưa có ghi chú",
   "enterTaskNotes": "Nhập ghi chú công việc..."

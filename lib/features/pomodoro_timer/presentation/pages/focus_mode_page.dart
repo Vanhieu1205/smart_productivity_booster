@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../bloc/pomodoro_timer_bloc.dart';
 import '../bloc/pomodoro_timer_event.dart';
 import '../bloc/pomodoro_timer_state.dart';
@@ -46,10 +47,14 @@ class _FocusModePageState extends State<FocusModePage> {
     _randomQuote = _quotes[DateTime.now().minute % _quotes.length];
     // Ẩn system UI để immersive mode
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    // Bật wakelock - giữ màn hình sáng trong chế độ tập trung
+    WakelockPlus.enable();
   }
 
   @override
   void dispose() {
+    // Tắt wakelock
+    WakelockPlus.disable();
     // Khôi phục system UI về chế độ edge-to-edge
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();

@@ -7,6 +7,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/skeleton_box.dart';
 import '../bloc/statistics_bloc.dart';
 import '../bloc/statistics_event.dart';
@@ -114,7 +115,14 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.statistics, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppLogo(size: 32),
+            const SizedBox(width: 8),
+            Text(l10n.statistics, style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
         centerTitle: false,
         bottom: TabBar(
           controller: _tabController,

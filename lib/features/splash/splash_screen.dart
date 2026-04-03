@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/navigation/app_router.dart';
 
-// Loại bỏ import dư thừa vì DI đã ở Main
-
 import '../../features/eisenhower_matrix/presentation/bloc/eisenhower_bloc.dart';
 import '../../features/eisenhower_matrix/presentation/bloc/eisenhower_event.dart';
 import '../../features/settings/presentation/bloc/settings_bloc.dart';
@@ -53,7 +51,7 @@ class _SplashScreenState extends State<SplashScreen> {
       // 5. Điều hướng theo Hive Session / Onboarding
       final isCompleted = await sl<OnboardingLocalDataSource>().isOnboardingCompleted();
       final isLoggedIn = await sl<AuthRepository>().isLoggedIn();
-      
+
       if (mounted) {
         if (!isCompleted) {
           // Lần đầu mở app -> Chuyển đến Onboarding
@@ -90,27 +88,25 @@ class _SplashScreenState extends State<SplashScreen> {
               duration: const Duration(seconds: 1),
               curve: Curves.easeOutBack,
               child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.task_alt,
-                  size: 80,
-                  color: Theme.of(context).colorScheme.primary,
+                width: 120,
+                height: 120,
+                padding: const EdgeInsets.all(16),
+                child: Image.asset(
+                  'assets/icons/app_icon_remove_bg.png',
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.task_alt,
+                      size: 80,
+                      color: Colors.white,
+                    );
+                  },
                 ),
               ),
             ),
             const SizedBox(height: 32),
-            
+
             // Tên Ứng dụng
             const Text(
               'Smart Productivity',

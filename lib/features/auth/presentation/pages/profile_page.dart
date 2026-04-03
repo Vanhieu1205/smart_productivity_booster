@@ -1,5 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -15,6 +19,9 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
+  final _imagePicker = ImagePicker();
+  String? _selectedAvatarPath;
+  bool _isLoadingAvatar = false;
 
   @override
   void initState() {
@@ -23,6 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
       _usernameController.text = authState.user.username;
+      _selectedAvatarPath = authState.user.avatarPath;
     }
   }
 
@@ -32,11 +40,133 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    setState(() => _isLoadingAvatar = true);
+    
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 500,
+        maxHeight: 500,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        // Copy image to app documents directory
+        final appDir = await getApplicationDocumentsDirectory();
+        final avatarsDir = Directory('${appDir.path}/avatars');
+        if (!await avatarsDir.exists()) {
+          await avatarsDir.create(recursive: true);
+        }
+        
+        final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}${path.extension(image.path)}';
+        final savedPath = '${avatarsDir.path}/$fileName';
+        
+        // Copy file to app directory
+        await File(image.path).copy(savedPath);
+        
+        setState(() {
+          _selectedAvatarPath = savedPath;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi chọn ảnh: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      setState(() => _isLoadingAvatar = false);
+    }
+  }
+
+  Future<void> _pickFromCamera() async {
+    setState(() => _isLoadingAvatar = true);
+    
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 500,
+        maxHeight: 500,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        // Copy image to app documents directory
+        final appDir = await getApplicationDocumentsDirectory();
+        final avatarsDir = Directory('${appDir.path}/avatars');
+        if (!await avatarsDir.exists()) {
+          await avatarsDir.create(recursive: true);
+        }
+        
+        final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}${path.extension(image.path)}';
+        final savedPath = '${avatarsDir.path}/$fileName';
+        
+        // Copy file to app directory
+        await File(image.path).copy(savedPath);
+        
+        setState(() {
+          _selectedAvatarPath = savedPath;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi chụp ảnh: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      setState(() => _isLoadingAvatar = false);
+    }
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Chọn từ Thư viện'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Chụp ảnh mới'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickFromCamera();
+              },
+            ),
+            if (_selectedAvatarPath != null)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Xóa ảnh đại diện', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() {
+                    _selectedAvatarPath = null;
+                  });
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _onSave() {
     if (_formKey.currentState!.validate()) {
       final l10n = AppLocalizations.of(context)!;
       context.read<AuthBloc>().add(
-        UpdateUserRequested(newUsername: _usernameController.text.trim()),
+        UpdateUserRequested(
+          newUsername: _usernameController.text.trim(),
+          newAvatarPath: _selectedAvatarPath,
+        ),
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.profileUpdated), backgroundColor: Colors.green),
@@ -67,17 +197,79 @@ class _ProfilePageState extends State<ProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 16),
+                  
+                  // Avatar Section
                   Center(
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                      child: Text(
-                        user.avatarInitials,
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                    child: GestureDetector(
+                      onTap: _showImageSourceDialog,
+                      child: Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 60,
+                            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                            child: _selectedAvatarPath != null
+                                ? ClipOval(
+                                    child: Image.file(
+                                      File(_selectedAvatarPath!),
+                                      width: 120,
+                                      height: 120,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Text(
+                                        user.avatarInitials,
+                                        style: TextStyle(
+                                          fontSize: 40,
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    user.avatarInitials,
+                                    style: TextStyle(
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: _isLoadingAvatar
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.camera_alt,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      'Nhấn để thay đổi ảnh đại diện',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),

@@ -29,14 +29,9 @@ class TaskCardWidget extends StatelessWidget {
     final theme = Theme.of(context);
 
     return GestureDetector(
-      // onTap: mở màn hình chi tiết task
-      onTap: () {
-        // TODO: Navigator.push tới TaskDetailPage (truyền TaskEntity)
-        // Navigator.of(context).push(MaterialPageRoute(
-        //   builder: (_) => TaskDetailPage(task: task),
-        // ));
-      },
-      // onLongPress: giữ để chuẩn bị mở menu / kéo thả (giữ nguyên behavior sau này)
+      // onTap: mở dialog chi tiết task
+      onTap: () => _showTaskDetail(context),
+      // onLongPress: giữ để chuẩn bị kéo thả
       onLongPress: () {
         // TODO: triển khai menu ngữ cảnh (edit, move, delete) nếu cần
       },
@@ -189,13 +184,229 @@ class TaskCardWidget extends StatelessWidget {
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               Navigator.of(context).pop();
-              // Gửi Event DeleteTask vào BLoC
               context.read<EisenhowerBloc>().add(DeleteTask(task.id));
             },
             child: Text(l10n.deleteTask),
           ),
         ],
       ),
+    );
+  }
+
+  /// Hiện Dialog chi tiết task khi bấm vào
+  void _showTaskDetail(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final color = task.quadrant.color;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header với icon quadrant ───────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(task.quadrant.icon, color: color, size: 28),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            task.title,
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _getQuadrantName(l10n, task.quadrant),
+                              style: TextStyle(color: color, fontWeight: FontWeight.w500, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Nội dung chi tiết ───────────────────────────────
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Mô tả
+                    if (task.description.isNotEmpty) ...[
+                      _DetailRow(
+                        icon: Icons.notes_rounded,
+                        label: l10n.taskDescription,
+                        value: task.description,
+                        color: color,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Ngày giờ đến hạn
+                    if (task.dueDate != null) ...[
+                      _DetailRow(
+                        icon: Icons.calendar_today_rounded,
+                        label: l10n.dueDate,
+                        value: _formatDateTime(task.dueDate!),
+                        color: color,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Nhãn
+                    if (task.label != null) ...[
+                      _DetailRow(
+                        icon: Icons.label_rounded,
+                        label: l10n.taskLabels,
+                        value: task.label!.name,
+                        color: color,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Ghi chú
+                    if (task.notes != null && task.notes!.isNotEmpty) ...[
+                      _DetailRow(
+                        icon: Icons.sticky_note_2_rounded,
+                        label: l10n.notes,
+                        value: task.notes!,
+                        color: color,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Tiến độ Pomodoro
+                    _DetailRow(
+                      icon: Icons.timer_rounded,
+                      label: l10n.pomodoroTimer,
+                      value: l10n.pomodoroProgress(task.completedPomodoros, task.estimatedPomodoros),
+                      color: color,
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Nút đóng ─────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(l10n.done),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getQuadrantName(AppLocalizations l10n, QuadrantType type) {
+    switch (type) {
+      case QuadrantType.doIt: return l10n.quadrant1;
+      case QuadrantType.scheduleIt: return l10n.quadrant2;
+      case QuadrantType.delegateIt: return l10n.quadrant3;
+      case QuadrantType.eliminateIt: return l10n.quadrant4;
+    }
+  }
+
+  String _formatDateTime(DateTime dt) {
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final year = dt.year;
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year - $hour:$minute';
+  }
+}
+
+/// Widget hiển thị một dòng chi tiết
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: theme.textTheme.bodyLarge,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

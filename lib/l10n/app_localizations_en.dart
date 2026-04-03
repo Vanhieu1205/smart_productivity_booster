@@ -54,6 +54,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginNoAccount => 'Don\'t have an account? Register now';
 
   @override
+  String get loginForgotPassword => 'Forgot password?';
+
+  @override
+  String get forgotPasswordTitle => 'Forgot Password';
+
+  @override
+  String get forgotPasswordDesc =>
+      'Enter your email address and we\'ll send you a link to reset your password.';
+
+  @override
+  String get forgotPasswordEmail => 'Email address';
+
+  @override
+  String get forgotPasswordButton => 'Send Reset Link';
+
+  @override
+  String get forgotPasswordBack => 'Back to Login';
+
+  @override
+  String get forgotPasswordSuccess =>
+      'Reset link sent! Please check your email.';
+
+  @override
   String get registerTitle => 'Register Account';
 
   @override
@@ -73,6 +96,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get registerHasAccount => 'Already have an account? Login';
+
+  @override
+  String get welcomeSpb => 'Welcome SPB';
 
   @override
   String get logout => 'Logout';
@@ -155,6 +181,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cannotBeEmpty => 'This field cannot be empty';
+
+  @override
+  String get invalidEmail => 'Invalid email format';
+
+  @override
+  String get passwordMinLength => 'Password must be at least 6 characters';
+
+  @override
+  String get passwordMismatch => 'Passwords do not match';
+
+  @override
+  String get securityQuestion => 'Security Question';
+
+  @override
+  String get securityAnswer => 'Security Answer';
+
+  @override
+  String get verifySecurityQuestion => 'Answer Your Security Question';
+
+  @override
+  String get verifyButton => 'Verify';
+
+  @override
+  String get resetPasswordTitle => 'Reset Password';
+
+  @override
+  String get resetPasswordDesc => 'Enter your new password';
+
+  @override
+  String get resetPasswordButton => 'Reset Password';
 
   @override
   String get classify => 'Classify';
@@ -464,6 +520,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get greetingLateNight => 'Good Night';
 
   @override
+  String get welcomeLabel => 'Welcome';
+
+  @override
   String get calendarMode => 'Calendar View';
 
   @override
@@ -495,6 +554,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dueDate => 'Due Date';
+
+  @override
+  String get dueTime => 'Due Time';
+
+  @override
+  String get dueDateTime => 'Date & Time';
+
+  @override
+  String get selectDate => 'Select Date';
+
+  @override
+  String get selectTime => 'Select Time';
+
+  @override
+  String get selectDateTime => 'Select Date and Time';
+
+  @override
+  String todayOnly(String hour, String minute) {
+    return 'Today ($hour:$minute)';
+  }
+
+  @override
+  String get dueDateInfo =>
+      'Do It: select time only for today. Other tabs: select date and time';
 
   @override
   String get notes => 'Notes';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/skeleton_box.dart';
 import '../../domain/entities/quadrant_type.dart';
 import '../bloc/eisenhower_bloc.dart';
@@ -34,8 +35,17 @@ class _EisenhowerPageState extends State<EisenhowerPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isCalendarView ? l10n.calendarMode : l10n.eisenhowerMatrix),
-        titleTextStyle: TextStyle(fontSize: isSmall ? 16 : null),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppLogo(size: 32),
+            const SizedBox(width: 8),
+            Text(
+              _isCalendarView ? l10n.calendarMode : l10n.eisenhowerMatrix,
+              style: TextStyle(fontSize: isSmall ? 16 : null),
+            ),
+          ],
+        ),
         actions: [
           // Nút chuyển đổi View
           IconButton(

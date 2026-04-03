@@ -11,6 +11,7 @@ import '../widgets/phase_indicator_widget.dart';
 import '../widgets/white_noise_widget.dart';
 import '../../data/models/pomodoro_session_model.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/daily_progress_ring.dart';
 import '../../../../features/settings/presentation/bloc/settings_bloc.dart';
 import '../../../../features/settings/presentation/bloc/settings_state.dart';
@@ -40,13 +41,13 @@ class PomodoroPage extends StatelessWidget {
     );
   }
 
-  void _onPhaseCompleted(BuildContext context, PomodoroCompleted state, AppLocalizations l10n) {
+  void _onPhaseCompleted(
+      BuildContext context, PomodoroCompleted state, AppLocalizations l10n) {
     final isWorkDone = state.completedType == TimerType.work;
     final message = isWorkDone ? l10n.pomodoroComplete : l10n.breakComplete;
 
-    final bgColor = isWorkDone
-        ? const Color(0xFF43A047)
-        : const Color(0xFF1E88E5);
+    final bgColor =
+        isWorkDone ? const Color(0xFF43A047) : const Color(0xFF1E88E5);
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -56,7 +57,8 @@ class PomodoroPage extends StatelessWidget {
           backgroundColor: bgColor,
           duration: const Duration(seconds: 4),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           action: SnackBarAction(
             label: l10n.startTimer,
             textColor: Colors.white,
@@ -86,20 +88,27 @@ class PomodoroPage extends StatelessWidget {
     // Lấy số Pomodoro hôm nay và mục tiêu
     final todayPomos = _getTodayPomodoroCount();
     final settingsState = context.watch<SettingsBloc>().state;
-    final dailyGoal = settingsState is SettingsLoaded
-        ? settingsState.dailyPomodoroGoal
-        : 8;
+    final dailyGoal =
+        settingsState is SettingsLoaded ? settingsState.dailyPomodoroGoal : 8;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.pomodoroTimer),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppLogo(size: 22),
+            const SizedBox(width: 8),
+            Text(l10n.pomodoroTimer),
+          ],
+        ),
         centerTitle: true,
         actions: [
           Padding(
             padding: EdgeInsets.only(right: isSmall ? 8 : 16),
             child: Center(
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: isSmall ? 6 : 10, vertical: isSmall ? 2 : 4),
+                padding: EdgeInsets.symmetric(
+                    horizontal: isSmall ? 6 : 10, vertical: isSmall ? 2 : 4),
                 decoration: BoxDecoration(
                   color: phaseColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -118,17 +127,17 @@ class PomodoroPage extends StatelessWidget {
           ),
         ],
       ),
-
       backgroundColor: Color.lerp(
         theme.colorScheme.surface,
         phaseColor.withOpacity(0.05),
         0.5,
       ),
-
       body: SafeArea(
         child: isLandscape
-            ? _buildLandscapeLayout(context, state, l10n, todayPomos, dailyGoal, phaseColor, horizontalPadding, progressSize)
-            : _buildPortraitLayout(context, state, l10n, todayPomos, dailyGoal, phaseColor, horizontalPadding, timerSize, isSmall),
+            ? _buildLandscapeLayout(context, state, l10n, todayPomos, dailyGoal,
+                phaseColor, horizontalPadding, progressSize)
+            : _buildPortraitLayout(context, state, l10n, todayPomos, dailyGoal,
+                phaseColor, horizontalPadding, timerSize, isSmall),
       ),
     );
   }
@@ -193,7 +202,8 @@ class PomodoroPage extends StatelessWidget {
           // ── Nút chế độ tập trung ──
           TextButton.icon(
             icon: Icon(Icons.fullscreen, size: isSmall ? 18 : null),
-            label: Text(l10n.focusMode, style: TextStyle(fontSize: isSmall ? 13 : null)),
+            label: Text(l10n.focusMode,
+                style: TextStyle(fontSize: isSmall ? 13 : null)),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -334,7 +344,8 @@ class _PhaseTipsBox extends StatelessWidget {
     final (icon, tip, color) = _tipFor(state, l10n);
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isSmall ? 12 : 16, vertical: isSmall ? 8 : 12),
+      padding: EdgeInsets.symmetric(
+          horizontal: isSmall ? 12 : 16, vertical: isSmall ? 8 : 12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
