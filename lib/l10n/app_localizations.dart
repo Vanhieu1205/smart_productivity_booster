@@ -263,7 +263,7 @@ abstract class AppLocalizations {
   /// No description provided for @registerHasAccount.
   ///
   /// In en, this message translates to:
-  /// **'Already have an account? Login'**
+  /// **'Already have an account?'**
   String get registerHasAccount;
 
   /// No description provided for @welcomeSpb.
@@ -433,6 +433,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This field cannot be empty'**
   String get cannotBeEmpty;
+
+  /// No description provided for @nameCannotBeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Name cannot be empty'**
+  String get nameCannotBeEmpty;
+
+  /// No description provided for @emailCannotBeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Email cannot be empty'**
+  String get emailCannotBeEmpty;
+
+  /// No description provided for @passwordCannotBeEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Password cannot be empty'**
+  String get passwordCannotBeEmpty;
 
   /// No description provided for @invalidEmail.
   ///

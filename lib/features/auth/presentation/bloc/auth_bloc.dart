@@ -102,7 +102,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthAuthenticated(user: updatedUser));
       }
     } catch (e) {
-      // Ignored
+      // Giữ nguyên AuthAuthenticated; lỗi hiển thị tại Profile nếu cần (timeout nút Lưu).
     }
   }
 

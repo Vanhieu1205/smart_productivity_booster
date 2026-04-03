@@ -31,7 +31,7 @@
   "registerPassword": "Mật khẩu",
   "registerConfirmPassword": "Xác nhận mật khẩu",
   "registerButton": "Đăng ký",
-  "registerHasAccount": "Đã có tài khoản? Đăng nhập",
+  "registerHasAccount": "Đã có tài khoản?",
 
   "welcomeSpb": "Welcome SPB",
 
@@ -63,6 +63,9 @@
   "confirmDelete": "Bạn có chắc muốn xóa công việc này không?",
   "taskCompleted": "Đã hoàn thành",
   "cannotBeEmpty": "Trường này không được để trống",
+  "nameCannotBeEmpty": "Tên không được bỏ trống",
+  "emailCannotBeEmpty": "Email không được bỏ trống",
+  "passwordCannotBeEmpty": "Mật khẩu không được bỏ trống",
   "invalidEmail": "Định dạng email không hợp lệ",
   "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
   "passwordMismatch": "Mật khẩu không khớp",

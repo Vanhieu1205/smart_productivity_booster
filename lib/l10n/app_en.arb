@@ -31,7 +31,7 @@
   "registerPassword": "Password",
   "registerConfirmPassword": "Confirm Password",
   "registerButton": "Register",
-  "registerHasAccount": "Already have an account? Login",
+  "registerHasAccount": "Already have an account?",
 
   "welcomeSpb": "Welcome SPB",
 
@@ -63,6 +63,9 @@
   "confirmDelete": "Are you sure you want to delete this task?",
   "taskCompleted": "Completed",
   "cannotBeEmpty": "This field cannot be empty",
+  "nameCannotBeEmpty": "Name cannot be empty",
+  "emailCannotBeEmpty": "Email cannot be empty",
+  "passwordCannotBeEmpty": "Password cannot be empty",
   "invalidEmail": "Invalid email format",
   "passwordMinLength": "Password must be at least 6 characters",
   "passwordMismatch": "Passwords do not match",

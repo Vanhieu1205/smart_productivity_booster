@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import '../../domain/entities/user_entity.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -22,6 +23,8 @@ class _ProfilePageState extends State<ProfilePage> {
   final _imagePicker = ImagePicker();
   String? _selectedAvatarPath;
   bool _isLoadingAvatar = false;
+  /// true khi vừa gửi Lưu — chờ AuthBloc cập nhật xong mới pop (đồng bộ Cài đặt).
+  bool _awaitingProfileSave = false;
 
   @override
   void initState() {
@@ -159,26 +162,78 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _onSave() {
-    if (_formKey.currentState!.validate()) {
-      final l10n = AppLocalizations.of(context)!;
-      context.read<AuthBloc>().add(
-        UpdateUserRequested(
-          newUsername: _usernameController.text.trim(),
-          newAvatarPath: _selectedAvatarPath,
-        ),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.profileUpdated), backgroundColor: Colors.green),
-      );
-      Navigator.pop(context);
+  Widget _buildAvatarContent(BuildContext context, UserEntity user) {
+    final pathStr = _selectedAvatarPath ?? user.avatarPath;
+    if (pathStr != null && pathStr.isNotEmpty) {
+      final file = File(pathStr);
+      if (file.existsSync()) {
+        return ClipOval(
+          child: Image.file(
+            file,
+            width: 120,
+            height: 120,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Text(
+              user.avatarInitials,
+              style: TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ),
+        );
+      }
     }
+    return Text(
+      user.avatarInitials,
+      style: TextStyle(
+        fontSize: 40,
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+
+  void _onSave() {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _awaitingProfileSave = true);
+    context.read<AuthBloc>().add(
+      UpdateUserRequested(
+        newUsername: _usernameController.text.trim(),
+        newAvatarPath: _selectedAvatarPath,
+      ),
+    );
+    // Tránh kẹt nút tải nếu Bloc không phát state mới (hiếm)
+    Future.delayed(const Duration(seconds: 12), () {
+      if (mounted && _awaitingProfileSave) {
+        setState(() => _awaitingProfileSave = false);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (prev, curr) =>
+          _awaitingProfileSave &&
+          curr is AuthAuthenticated &&
+          prev is AuthAuthenticated &&
+          prev.user != curr.user,
+      listener: (context, state) {
+        if (!_awaitingProfileSave || state is! AuthAuthenticated) return;
+        setState(() => _awaitingProfileSave = false);
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.profileUpdated),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(l10n.myProfile),
       ),
@@ -207,31 +262,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           CircleAvatar(
                             radius: 60,
                             backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                            child: _selectedAvatarPath != null
-                                ? ClipOval(
-                                    child: Image.file(
-                                      File(_selectedAvatarPath!),
-                                      width: 120,
-                                      height: 120,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Text(
-                                        user.avatarInitials,
-                                        style: TextStyle(
-                                          fontSize: 40,
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(context).colorScheme.primary,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    user.avatarInitials,
-                                    style: TextStyle(
-                                      fontSize: 40,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).colorScheme.primary,
-                                    ),
-                                  ),
+                            child: _buildAvatarContent(context, user),
                           ),
                           Positioned(
                             bottom: 0,
@@ -285,7 +316,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return l10n.cannotBeEmpty;
+                        return l10n.nameCannotBeEmpty;
                       }
                       return null;
                     },
@@ -306,11 +337,17 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 48),
 
                   ElevatedButton(
-                    onPressed: _onSave,
+                    onPressed: _awaitingProfileSave ? null : _onSave,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: Text(l10n.save, style: const TextStyle(fontSize: 16)),
+                    child: _awaitingProfileSave
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(l10n.save, style: const TextStyle(fontSize: 16)),
                   ),
                 ],
               ),
@@ -318,6 +355,7 @@ class _ProfilePageState extends State<ProfilePage> {
           );
         },
       ),
+    ),
     );
   }
 }

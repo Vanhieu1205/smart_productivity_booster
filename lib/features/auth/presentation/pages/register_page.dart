@@ -69,38 +69,38 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  String? _validateRequired(String? value, String fieldName) {
+  String? _validateUsername(String? value, AppLocalizations l10n) {
     if (value == null || value.trim().isEmpty) {
-      return 'Vui lòng nhập $fieldName';
+      return l10n.nameCannotBeEmpty;
     }
     return null;
   }
 
-  String? _validateEmail(String? value) {
+  String? _validateEmail(String? value, AppLocalizations l10n) {
     if (value == null || value.trim().isEmpty) {
-      return 'Vui lòng nhập Email';
+      return l10n.emailCannotBeEmpty;
     }
     final emailRegex = RegExp(
         r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
     if (!emailRegex.hasMatch(value)) {
-      return 'Email không hợp lệ';
+      return l10n.invalidEmail;
     }
     return null;
   }
 
-  String? _validatePassword(String? value) {
+  String? _validatePassword(String? value, AppLocalizations l10n) {
     if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập Mật khẩu';
+      return l10n.passwordCannotBeEmpty;
     }
     if (value.length < 6) {
-      return 'Mật khẩu phải từ 6 ký tự trở lên';
+      return l10n.passwordMinLength;
     }
     return null;
   }
 
-  String? _validateConfirmPassword(String? value) {
+  String? _validateConfirmPassword(String? value, AppLocalizations l10n) {
     if (value == null || value.isEmpty) {
-      return 'Vui lòng xác nhận mật khẩu';
+      return l10n.cannotBeEmpty;
     }
     if (value != _passwordController.text) {
       return 'Mật khẩu xác nhận không khớp';
@@ -164,7 +164,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    validator: (val) => _validateRequired(val, 'Tên hiển thị'),
+                    validator: (val) => _validateUsername(val, l10n),
                     onFieldSubmitted: (_) => _emailFocusNode.requestFocus(),
                   ),
                   const SizedBox(height: 16),
@@ -180,7 +180,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    validator: _validateEmail,
+                    validator: (val) => _validateEmail(val, l10n),
                     onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
                   ),
                   const SizedBox(height: 16),
@@ -206,7 +206,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    validator: _validatePassword,
+                    validator: (val) => _validatePassword(val, l10n),
                     onFieldSubmitted: (_) =>
                         _confirmPasswordFocusNode.requestFocus(),
                   ),
@@ -233,7 +233,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    validator: _validateConfirmPassword,
+                    validator: (val) => _validateConfirmPassword(val, l10n),
                     onFieldSubmitted: (_) => _answerFocusNode.requestFocus(),
                   ),
                   const SizedBox(height: 16),
@@ -243,6 +243,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<int>(
+                    isExpanded: true,
                     value: _selectedQuestionIndex,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.help_outline),
@@ -250,12 +251,26 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
+                    selectedItemBuilder: (context) {
+                      return List.generate(_securityQuestions.length, (index) {
+                        return Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            _securityQuestions[index],
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        );
+                      });
+                    },
                     items: List.generate(_securityQuestions.length, (index) {
                       return DropdownMenuItem(
                         value: index,
                         child: Text(
                           _securityQuestions[index],
                           style: const TextStyle(fontSize: 14),
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                       );
@@ -276,7 +291,12 @@ class _RegisterPageState extends State<RegisterPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    validator: (val) => _validateRequired(val, 'Câu trả lời'),
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return l10n.cannotBeEmpty;
+                      }
+                      return null;
+                    },
                     onFieldSubmitted: (_) => _onRegister(),
                   ),
                   const SizedBox(height: 48),
@@ -304,6 +324,20 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                       );
                     },
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        l10n.registerHasAccount,
+                        style: TextStyle(color: colorScheme.onSurfaceVariant),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(l10n.loginButton),
+                      ),
+                    ],
                   ),
                 ],
               ),

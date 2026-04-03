@@ -95,7 +95,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registerButton => 'Register';
 
   @override
-  String get registerHasAccount => 'Already have an account? Login';
+  String get registerHasAccount => 'Already have an account?';
 
   @override
   String get welcomeSpb => 'Welcome SPB';
@@ -181,6 +181,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cannotBeEmpty => 'This field cannot be empty';
+
+  @override
+  String get nameCannotBeEmpty => 'Name cannot be empty';
+
+  @override
+  String get emailCannotBeEmpty => 'Email cannot be empty';
+
+  @override
+  String get passwordCannotBeEmpty => 'Password cannot be empty';
 
   @override
   String get invalidEmail => 'Invalid email format';

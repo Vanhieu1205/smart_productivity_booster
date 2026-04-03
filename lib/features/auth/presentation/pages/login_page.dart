@@ -42,26 +42,24 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Hàm validate email cơ bản
-  String? _validateEmail(String? value) {
+  String? _validateEmail(String? value, AppLocalizations l10n) {
     if (value == null || value.trim().isEmpty) {
-      return 'Vui lòng nhập Email';
+      return l10n.cannotBeEmpty;
     }
     final emailRegex = RegExp(
         r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
     if (!emailRegex.hasMatch(value)) {
-      return 'Email không hợp lệ';
+      return l10n.invalidEmail;
     }
     return null;
   }
 
-  // Hàm validate password cơ bản
-  String? _validatePassword(String? value) {
+  String? _validatePassword(String? value, AppLocalizations l10n) {
     if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập Mật khẩu';
+      return l10n.cannotBeEmpty;
     }
     if (value.length < 6) {
-      return 'Mật khẩu phải từ 6 ký tự trở lên';
+      return l10n.passwordMinLength;
     }
     return null;
   }
@@ -153,7 +151,7 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      validator: _validateEmail,
+                      validator: (v) => _validateEmail(v, l10n),
                       onFieldSubmitted: (_) {
                         FocusScope.of(context).requestFocus(_passwordFocusNode);
                       },
@@ -185,7 +183,7 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      validator: _validatePassword,
+                      validator: (v) => _validatePassword(v, l10n),
                       onFieldSubmitted: (_) => _onLogin(),
                     ),
                     const SizedBox(height: 32),

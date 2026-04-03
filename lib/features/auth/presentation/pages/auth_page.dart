@@ -303,7 +303,7 @@ class _AuthPageState extends State<AuthPage> {
                 textCapitalization: TextCapitalization.words,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return l10n.cannotBeEmpty;
+                    return l10n.nameCannotBeEmpty;
                   }
                   return null;
                 },
@@ -327,7 +327,7 @@ class _AuthPageState extends State<AuthPage> {
               textInputAction: TextInputAction.next,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return l10n.cannotBeEmpty;
+                  return isLogin ? l10n.cannotBeEmpty : l10n.emailCannotBeEmpty;
                 }
                 if (!value.contains('@')) {
                   return l10n.invalidEmail;
@@ -361,7 +361,7 @@ class _AuthPageState extends State<AuthPage> {
               textInputAction: isLogin ? TextInputAction.done : TextInputAction.next,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return l10n.cannotBeEmpty;
+                  return isLogin ? l10n.cannotBeEmpty : l10n.passwordCannotBeEmpty;
                 }
                 if (!isLogin && value.length < 6) {
                   return l10n.passwordMinLength;
@@ -422,6 +422,7 @@ class _AuthPageState extends State<AuthPage> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<int>(
+                isExpanded: true,
                 value: _selectedQuestionIndex,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.help_outline),
@@ -429,12 +430,26 @@ class _AuthPageState extends State<AuthPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                selectedItemBuilder: (context) {
+                  return List.generate(_securityQuestions.length, (index) {
+                    return Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        _securityQuestions[index],
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    );
+                  });
+                },
                 items: List.generate(_securityQuestions.length, (index) {
                   return DropdownMenuItem(
                     value: index,
                     child: Text(
                       _securityQuestions[index],
                       style: const TextStyle(fontSize: 14),
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                   );

@@ -95,7 +95,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get registerButton => 'Đăng ký';
 
   @override
-  String get registerHasAccount => 'Đã có tài khoản? Đăng nhập';
+  String get registerHasAccount => 'Đã có tài khoản?';
 
   @override
   String get welcomeSpb => 'Welcome SPB';
@@ -181,6 +181,15 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get cannotBeEmpty => 'Trường này không được để trống';
+
+  @override
+  String get nameCannotBeEmpty => 'Tên không được bỏ trống';
+
+  @override
+  String get emailCannotBeEmpty => 'Email không được bỏ trống';
+
+  @override
+  String get passwordCannotBeEmpty => 'Mật khẩu không được bỏ trống';
 
   @override
   String get invalidEmail => 'Định dạng email không hợp lệ';

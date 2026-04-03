@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/settings_bloc.dart';
@@ -56,48 +58,33 @@ class SettingsPage extends StatelessWidget {
           final bool soundEnabled = state.isSoundEnabled;
           final int dailyGoal = state.dailyPomodoroGoal;
 
-          // Đọc trạng thái AuthBloc bằng context.watch để tự động cập nhật nếu Auth thay đổi
-          final authState = context.watch<AuthBloc>().state;
-          UserEntity? currentUser;
-          if (authState is AuthAuthenticated) {
-            currentUser = authState.user;
-          }
-
           return ListView(
             padding: const EdgeInsets.symmetric(vertical: 12),
             children: [
               // ===== 0. THÔNG TIN TÀI KHOẢN =====
-              ListTile(
-                leading: CircleAvatar(
-                  radius: 28,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.primaryContainer,
-                  child: currentUser != null
-                      ? Text(
-                          currentUser.avatarInitials,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        )
-                      : Icon(
-                          Icons.person,
-                          size: 28,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                ),
-                title: Text(
-                  currentUser?.username ?? 'Khách',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                subtitle: Text(currentUser?.email ?? 'Đăng nhập để sử dụng'),
-                trailing: const Icon(Icons.edit_outlined),
-                onTap: () {
-                  Navigator.pushNamed(context, AppRouter.profile);
+              // BlocBuilder riêng để mỗi khi AuthBloc đổi (avatar, tên) luôn rebuild
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, authState) {
+                  UserEntity? currentUser;
+                  if (authState is AuthAuthenticated) {
+                    currentUser = authState.user;
+                  }
+                  return ListTile(
+                    leading: _SettingsAccountAvatar(user: currentUser),
+                    title: Text(
+                      currentUser?.username ?? 'Khách',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    subtitle:
+                        Text(currentUser?.email ?? 'Đăng nhập để sử dụng'),
+                    trailing: const Icon(Icons.edit_outlined),
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRouter.profile);
+                    },
+                  );
                 },
               ),
               const Divider(height: 32),
@@ -468,6 +455,47 @@ class SettingsPage extends StatelessWidget {
           letterSpacing: 1.2,
         ),
       ),
+    );
+  }
+}
+
+/// Avatar Cài đặt: ưu tiên ảnh file nếu `avatarPath` hợp lệ, không thì chữ viết tắt.
+class _SettingsAccountAvatar extends StatelessWidget {
+  final UserEntity? user;
+
+  const _SettingsAccountAvatar({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final path = user?.avatarPath;
+    if (path != null && path.isNotEmpty) {
+      final file = File(path);
+      if (file.existsSync()) {
+        return CircleAvatar(
+          radius: 28,
+          backgroundColor: cs.primaryContainer,
+          backgroundImage: FileImage(file),
+        );
+      }
+    }
+    return CircleAvatar(
+      radius: 28,
+      backgroundColor: cs.primaryContainer,
+      child: user != null
+          ? Text(
+              user!.avatarInitials,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: cs.primary,
+              ),
+            )
+          : Icon(
+              Icons.person,
+              size: 28,
+              color: cs.primary,
+            ),
     );
   }
 }
