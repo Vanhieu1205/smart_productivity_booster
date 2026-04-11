@@ -51,6 +51,12 @@ class TimerTick extends PomodoroEvent {
   List<Object?> get props => [remainingSeconds];
 }
 
+/// [Nội bộ] Sau khi hoàn thành work, BLoC tự thêm event này để bắt đầu pha nghỉ
+/// mà không cần người dùng nhấn Start (StartTimer luôn reset về work).
+class BeginBreakSession extends PomodoroEvent {
+  const BeginBreakSession();
+}
+
 /// Liên kết Task ID với phiên hiện tại để thống kê pomodoro theo task
 class LinkTask extends PomodoroEvent {
   final String? taskId; // null = bỏ liên kết

@@ -53,18 +53,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     // Chỉ xử lý nếu dữ liệu Settings đang loaded
     if (state is SettingsLoaded) {
-      final currentState = state as SettingsLoaded;
-
-      // Cập nhật giá trị isDarkMode (giữ nguyên ngôn ngữ)
-      final newSettings = SettingsModel(
-        isDarkMode: event.isDarkMode,
-        languageCode: currentState.languageCode,
-        isSoundEnabled: currentState.isSoundEnabled,
-        dailyPomodoroGoal: currentState.dailyPomodoroGoal,
-      );
-
       try {
-        // Ghi xuống DB để lưu dai dẳng
+        final stored = await localDataSource.getSettings();
+        final newSettings = stored.copyWith(isDarkMode: event.isDarkMode);
         await localDataSource.saveSettings(newSettings);
         // Phát state làm thay đổi theme toàn app nếu MaterialApp lắng nghe
         emit(SettingsLoaded(
@@ -85,17 +76,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     Emitter<SettingsState> emit,
   ) async {
     if (state is SettingsLoaded) {
-      final currentState = state as SettingsLoaded;
-
-      // Cập nhật giá trị ngôn ngữ (giữ nguyên chế độ sáng tối)
-      final newSettings = SettingsModel(
-        isDarkMode: currentState.isDarkMode,
-        languageCode: event.languageCode,
-        isSoundEnabled: currentState.isSoundEnabled,
-        dailyPomodoroGoal: currentState.dailyPomodoroGoal,
-      );
-
       try {
+        final stored = await localDataSource.getSettings();
+        final newSettings = stored.copyWith(languageCode: event.languageCode);
         await localDataSource.saveSettings(newSettings);
         emit(SettingsLoaded(
           isDarkMode: newSettings.isDarkMode,
@@ -114,16 +97,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     Emitter<SettingsState> emit,
   ) async {
     if (state is SettingsLoaded) {
-      final currentState = state as SettingsLoaded;
-
-      final newSettings = SettingsModel(
-        isDarkMode: currentState.isDarkMode,
-        languageCode: currentState.languageCode,
-        isSoundEnabled: event.isSoundEnabled,
-        dailyPomodoroGoal: currentState.dailyPomodoroGoal,
-      );
-
       try {
+        final stored = await localDataSource.getSettings();
+        final newSettings = stored.copyWith(isSoundEnabled: event.isSoundEnabled);
         await localDataSource.saveSettings(newSettings);
         emit(SettingsLoaded(
           isDarkMode: newSettings.isDarkMode,
@@ -143,16 +119,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     Emitter<SettingsState> emit,
   ) async {
     if (state is SettingsLoaded) {
-      final currentState = state as SettingsLoaded;
-
-      final newSettings = SettingsModel(
-        isDarkMode: currentState.isDarkMode,
-        languageCode: currentState.languageCode,
-        isSoundEnabled: currentState.isSoundEnabled,
-        dailyPomodoroGoal: event.dailyPomodoroGoal,
-      );
-
       try {
+        final stored = await localDataSource.getSettings();
+        final newSettings =
+            stored.copyWith(dailyPomodoroGoal: event.dailyPomodoroGoal);
         await localDataSource.saveSettings(newSettings);
         emit(SettingsLoaded(
           isDarkMode: newSettings.isDarkMode,

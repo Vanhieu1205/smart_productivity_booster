@@ -9,6 +9,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/skeleton_box.dart';
+import '../../../pomodoro_timer/domain/entities/timer_type.dart';
+import '../../../pomodoro_timer/presentation/bloc/pomodoro_timer_bloc.dart';
+import '../../../pomodoro_timer/presentation/bloc/pomodoro_timer_state.dart';
 import '../bloc/statistics_bloc.dart';
 import '../bloc/statistics_event.dart';
 import '../bloc/statistics_state.dart';
@@ -113,7 +116,15 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
+    return BlocListener<PomodoroTimerBloc, PomodoroState>(
+      listenWhen: (prev, curr) => curr is PomodoroCompleted,
+      listener: (context, state) {
+        if (state is! PomodoroCompleted) return;
+        if (state.completedType != TimerType.work) return;
+        context.read<StatisticsBloc>().add(const LoadWeeklyStats());
+        context.read<StatisticsBloc>().add(const LoadMonthlyStats());
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -180,6 +191,7 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -328,9 +340,6 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
   // ============================================================
   // Tải dữ liệu 30 ngày gần nhất, hiển thị LineChart với số Pomodoro mỗi ngày.
   Widget _buildMonthView(BuildContext context, AppLocalizations l10n) {
-    final now = DateTime.now();
-    final thirtyDaysAgo = now.subtract(const Duration(days: 30));
-
     return BlocBuilder<StatisticsBloc, StatisticsState>(
       builder: (context, state) {
         if (state is StatisticsLoading) {
@@ -356,33 +365,14 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
 
         if (state is StatisticsLoaded) {
           final stats = state.weeklyStats;
+          final monthlyPomos = state.monthlyDailyPomos.isNotEmpty
+              ? state.monthlyDailyPomos
+              : List.filled(30, 0);
 
-          // Tính tổng số Pomodoro trong 30 ngày từ weeklyStats
-          // Gom các ngày trong tuần hiện tại và các tuần trước đó
-          final List<int> dailyPomos = List.filled(30, 0);
+          final totalMonthPomos = monthlyPomos.fold<int>(0, (sum, c) => sum + c);
 
-          // Đếm số pomodoro mỗi ngày trong 30 ngày
-          // Với mỗi ngày trong khoảng 30 ngày, kiểm tra xem ngày đó thuộc tuần nào
-          // và lấy dữ liệu từ weeklyStats (dữ liệu tuần được chọn)
-          for (int i = 0; i < 30; i++) {
-            final day = thirtyDaysAgo.add(Duration(days: i));
-            // Chuẩn hóa ngày về đầu ngày để so sánh
-            final normalizedDay = DateTime(day.year, day.month, day.day);
-            // Kiểm tra nếu ngày nằm trong tuần hiện tại của stats
-            if (!day.isBefore(stats.weekStart) && !day.isAfter(stats.weekEnd)) {
-              // Sử dụng dailyPomodoros (Map<DateTime, int>) thay vì dailyPomodoro (List)
-              if (stats.dailyPomodoros.containsKey(normalizedDay)) {
-                dailyPomos[i] = stats.dailyPomodoros[normalizedDay] ?? 0;
-              }
-            }
-          }
-
-          // Tổng số Pomodoro trong tháng
-          final totalMonthPomos = dailyPomos.fold<int>(0, (sum, count) => sum + count);
-
-          // Tạo spots cho LineChart (30 điểm dữ liệu)
           final List<FlSpot> spots = List.generate(30, (i) {
-            return FlSpot(i.toDouble(), dailyPomos[i].toDouble());
+            return FlSpot(i.toDouble(), monthlyPomos[i].toDouble());
           });
 
           return SafeArea(
@@ -466,7 +456,7 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
                       minX: 0,
                       maxX: 29,
                       minY: 0,
-                      maxY: _calculateMaxY(dailyPomos),
+                      maxY: _calculateMaxY(monthlyPomos),
                       lineBarsData: [
                         LineChartBarData(
                           spots: spots,
@@ -484,8 +474,11 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
                       lineTouchData: LineTouchData(
                         touchTooltipData: LineTouchTooltipData(
                           getTooltipItems: (touchedSpots) {
+                            final now = DateTime.now();
+                            final startDate = DateTime(now.year, now.month, now.day)
+                                .subtract(const Duration(days: 29));
                             return touchedSpots.map((spot) {
-                              final day = thirtyDaysAgo.add(Duration(days: spot.x.toInt()));
+                              final day = startDate.add(Duration(days: spot.x.toInt()));
                               return LineTooltipItem(
                                 '${DateFormat('dd/MM').format(day)}\n${spot.y.toInt()} Pomodoro',
                                 TextStyle(

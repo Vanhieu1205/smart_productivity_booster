@@ -44,21 +44,40 @@ class PomodoroPage extends StatelessWidget {
   void _onPhaseCompleted(
       BuildContext context, PomodoroCompleted state, AppLocalizations l10n) {
     final isWorkDone = state.completedType == TimerType.work;
+    final autoBreakNext = isWorkDone &&
+        (state.nextType == TimerType.shortBreak ||
+            state.nextType == TimerType.longBreak);
     final message = isWorkDone ? l10n.pomodoroComplete : l10n.breakComplete;
 
     final bgColor =
         isWorkDone ? const Color(0xFF43A047) : const Color(0xFF1E88E5);
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
+    final messenger = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
+    if (autoBreakNext) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            '$message\n${l10n.breakHint}',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: bgColor,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    } else {
+      messenger.showSnackBar(
         SnackBar(
           content: Text(message, style: const TextStyle(color: Colors.white)),
           backgroundColor: bgColor,
           duration: const Duration(seconds: 4),
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           action: SnackBarAction(
             label: l10n.startTimer,
             textColor: Colors.white,
@@ -68,6 +87,7 @@ class PomodoroPage extends StatelessWidget {
           ),
         ),
       );
+    }
   }
 
   Widget _buildBody(BuildContext context, PomodoroState state) {
@@ -115,7 +135,7 @@ class PomodoroPage extends StatelessWidget {
                   border: Border.all(color: phaseColor.withOpacity(0.3)),
                 ),
                 child: Text(
-                  '${state.completedPomodoros} 🍅',
+                  '$todayPomos 🍅',
                   style: TextStyle(
                     fontSize: isSmall ? 11 : 13,
                     fontWeight: FontWeight.w600,

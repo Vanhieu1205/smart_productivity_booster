@@ -33,5 +33,14 @@ class SoundService {
       AssetSource('sounds/break_complete.mp3'),
     );
   }
+
+  /// Phát âm thanh ăn mừng khi hoàn thành 1 Pomodoro work.
+  Future<void> playWorkCelebration() async {
+    if (!enabled) return;
+
+    await _player.play(
+      AssetSource('sounds/yeahhh.mp3'),
+    );
+  }
 }
 

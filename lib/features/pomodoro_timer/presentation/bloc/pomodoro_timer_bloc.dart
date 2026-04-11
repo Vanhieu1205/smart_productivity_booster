@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
@@ -84,6 +85,7 @@ class PomodoroTimerBloc extends Bloc<PomodoroEvent, PomodoroState> {
     // TimerTick dùng EventTransformer sequential để tránh queue overflow
     on<TimerTick>(_onTimerTick);
     on<LinkTask>(_onLinkTask);
+    on<BeginBreakSession>(_onBeginBreakSession);
   }
 
   // ── Handlers ───────────────────────────────────────────────────────────────
@@ -176,10 +178,8 @@ class PomodoroTimerBloc extends Bloc<PomodoroEvent, PomodoroState> {
       // Phát âm thanh theo loại phase vừa hoàn thành
       if (_currentType == TimerType.work) {
         _soundService.playWorkComplete();
-        // Cập nhật streak sau khi hoàn thành 1 phase work
-        _streakService.update();
-        // Kiểm tra achievements liên quan đến Pomodoro
-        _checkPomodoroAchievements();
+        // Phát âm thanh ăn mừng khi hoàn thành Pomodoro
+        _soundService.playWorkCelebration();
       } else {
         _soundService.playBreakComplete();
       }
@@ -190,6 +190,27 @@ class PomodoroTimerBloc extends Bloc<PomodoroEvent, PomodoroState> {
   }
 
   /// Liên kết hoặc bỏ liên kết Task với phiên hiện tại
+  void _onBeginBreakSession(
+    BeginBreakSession event,
+    Emitter<PomodoroState> emit,
+  ) {
+    _cancelTimer();
+    if (_currentType != TimerType.shortBreak &&
+        _currentType != TimerType.longBreak) {
+      return;
+    }
+    _sessionStartTime = DateTime.now();
+    final seconds = _currentType.duration.inSeconds;
+    _startTicking(seconds);
+    emit(PomodoroRunning(
+      currentType: _currentType,
+      remainingSeconds: seconds,
+      completedPomodoros: _completedPomodoros,
+      currentStreak: _currentStreak,
+      linkedTaskId: _linkedTaskId,
+    ));
+  }
+
   void _onLinkTask(LinkTask event, Emitter<PomodoroState> emit) {
     _linkedTaskId = event.taskId;
     // Nếu đang Running, update state để UI phản ánh
@@ -261,8 +282,17 @@ class PomodoroTimerBloc extends Bloc<PomodoroEvent, PomodoroState> {
       _currentType = TimerType.work;
     }
 
-    // Lưu session với đúng phase đã hoàn thành (trước khi _currentType thay đổi)
-    _saveCompletedSession(completedType);
+    // Lưu session (Hive + bộ nhớ) — bỏ qua khi Skip (không tính thống kê)
+    _saveCompletedSession(completedType, persist: !isSkipped);
+
+    if (completedType == TimerType.work && !isSkipped) {
+      Future.microtask(() async {
+        if (isClosed) return;
+        await _streakService.update();
+        if (isClosed) return;
+        _checkPomodoroAchievements();
+      });
+    }
 
     emit(PomodoroCompleted(
       completedType: completedType,
@@ -270,24 +300,38 @@ class PomodoroTimerBloc extends Bloc<PomodoroEvent, PomodoroState> {
       completedPomodoros: _completedPomodoros,
       currentStreak: _currentStreak,
     ));
+
+    // Tự động bắt đầu nghỉ sau khi hoàn thành work (không dùng StartTimer — vì luôn về work)
+    if (!isSkipped &&
+        completedType == TimerType.work &&
+        (_currentType == TimerType.shortBreak ||
+            _currentType == TimerType.longBreak)) {
+      Future.microtask(() => add(const BeginBreakSession()));
+    }
   }
 
-  /// Lưu session vừa hoàn thành vào danh sách nội bộ.
-  /// TODO: Inject PomodoroRepository và persist sang Hive.
-  void _saveCompletedSession(TimerType completedPhase) {
+  /// Lưu session vừa hoàn thành vào Hive (Dashboard / Thống kê / thành tựu).
+  void _saveCompletedSession(TimerType completedPhase, {required bool persist}) {
     if (_sessionStartTime == null) return;
 
     final session = PomodoroSessionEntity(
       id: const Uuid().v4(),
       startTime: _sessionStartTime!,
       endTime: DateTime.now(),
-      type: completedPhase, // Lưu đúng phase đã hoàn thành
-      isCompleted: true, // Hết giờ = hoàn thành trọn vẹn
+      type: completedPhase,
+      isCompleted: true,
       taskId: _linkedTaskId,
     );
 
     _completedSessions.add(session);
-    _sessionStartTime = DateTime.now(); // Reset cho phiên kế tiếp
+    _sessionStartTime = null;
+
+    if (persist && completedPhase == TimerType.work) {
+      try {
+        final box = Hive.box<PomodoroSessionModel>('pomodoro_sessions_box');
+        box.put(session.id, PomodoroSessionModel.fromEntity(session));
+      } catch (_) {}
+    }
   }
 
   /// Lấy danh sách sessions đã hoàn thành (dùng cho Statistics)
@@ -298,30 +342,31 @@ class PomodoroTimerBloc extends Bloc<PomodoroEvent, PomodoroState> {
   void _checkPomodoroAchievements() {
     final achievementService = sl<AchievementService>();
 
-    // Đếm tổng số Pomodoro đã hoàn thành
     final pomodoroBox = Hive.box<PomodoroSessionModel>('pomodoro_sessions_box');
     final totalPomodoros = pomodoroBox.values
         .where((s) => s.isCompleted && s.typeIndex == TimerType.work.index)
         .length;
 
-    // Đếm tổng số task đã hoàn thành
     final taskBox = Hive.box<TaskModel>('tasks_box');
     final totalTasks = taskBox.values.where((t) => t.isCompleted).length;
 
-    // Lấy streak hiện tại
     final streak = _streakService.getCurrentStreak();
 
-    // Kiểm tra early bird / night owl
     final now = DateTime.now();
     final hour = now.hour;
+    final today = DateTime(now.year, now.month, now.day);
+    final todayPomos = pomodoroBox.values.where((s) {
+      if (!s.isCompleted || s.typeIndex != TimerType.work.index) return false;
+      final d = DateTime(s.startTime.year, s.startTime.month, s.startTime.day);
+      return d == today;
+    }).length;
 
-    // Kiểm tra điều kiện và lấy achievements mới unlock
     final newlyUnlocked = achievementService.checkAndUnlock(
       totalTasks: totalTasks,
       totalPomodoros: totalPomodoros,
       streak: streak,
-      todayPomos: 1, // Mỗi lần hoàn thành 1 pomodoro work
-      usedAll4: false, // Có thể mở rộng sau
+      todayPomos: todayPomos,
+      usedAll4: false,
       hour: hour,
     );
 

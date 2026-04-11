@@ -26,3 +26,8 @@ class ChangeWeek extends StatisticsEvent {
   @override
   List<Object?> get props => [direction];
 }
+
+/// Nạp dữ liệu thống kê của 30 ngày gần nhất (cho tab Tháng)
+class LoadMonthlyStats extends StatisticsEvent {
+  const LoadMonthlyStats();
+}

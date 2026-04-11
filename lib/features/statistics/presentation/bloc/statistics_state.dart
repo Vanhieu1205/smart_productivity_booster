@@ -17,10 +17,16 @@ class StatisticsLoading extends StatisticsState {
 class StatisticsLoaded extends StatisticsState {
   final WeeklyStatsEntity weeklyStats;
 
-  const StatisticsLoaded(this.weeklyStats);
+  /// Dữ liệu 30 ngày cho tab Tháng (tính động từ Hive, không cần reload)
+  final List<int> monthlyDailyPomos;
+
+  const StatisticsLoaded({
+    required this.weeklyStats,
+    this.monthlyDailyPomos = const [],
+  });
 
   @override
-  List<Object?> get props => [weeklyStats];
+  List<Object?> get props => [weeklyStats, monthlyDailyPomos];
 }
 
 /// Có lỗi xảy ra trong quá trình load

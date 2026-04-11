@@ -14,6 +14,9 @@ import '../../../../features/eisenhower_matrix/domain/entities/quadrant_type.dar
 import '../../../../features/eisenhower_matrix/domain/entities/task_entity.dart';
 import '../../../../features/eisenhower_matrix/data/models/task_model.dart';
 import '../../../../features/pomodoro_timer/data/models/pomodoro_session_model.dart';
+import '../../../../features/pomodoro_timer/domain/entities/timer_type.dart';
+import '../../../../features/pomodoro_timer/presentation/bloc/pomodoro_timer_bloc.dart';
+import '../../../../features/pomodoro_timer/presentation/bloc/pomodoro_timer_state.dart';
 import '../../../../features/pomodoro_timer/presentation/pages/pomodoro_page.dart';
 import '../../../../features/settings/presentation/bloc/settings_bloc.dart';
 import '../../../../features/settings/presentation/bloc/settings_state.dart';
@@ -30,6 +33,11 @@ class DashboardPage extends StatelessWidget {
     final today = DateTime(now.year, now.month, now.day);
     final isSmall = ResponsiveUtils.isVerySmallPhone(context);
     final isTablet = ResponsiveUtils.isTablet(context);
+
+    // IndexedStack giữ Dashboard mounted — lắng nghe Pomodoro để đọc lại Hive sau mỗi phiên work
+    context.select<PomodoroTimerBloc, bool>(
+      (b) => b.state is PomodoroCompleted,
+    );
 
     final authState = context.watch<AuthBloc>().state;
     final username = authState is AuthAuthenticated ? authState.user.username : null;
@@ -229,7 +237,7 @@ class DashboardPage extends StatelessWidget {
 
     for (final model in sessionsBox.values) {
       final entity = model.toEntity();
-      if (!entity.isCompleted) continue;
+      if (!entity.isCompleted || entity.type != TimerType.work) continue;
 
       final sessionDate = DateTime(entity.startTime.year, entity.startTime.month, entity.startTime.day);
       if (sessionDate == today) {

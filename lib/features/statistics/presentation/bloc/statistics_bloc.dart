@@ -1,7 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
 import 'statistics_event.dart';
 import 'statistics_state.dart';
 import '../../domain/usecases/get_weekly_stats_usecase.dart';
+import '../../../pomodoro_timer/data/models/pomodoro_session_model.dart';
 
 // ============================================================
 // STATISTICS BLOC – Presentation Layer
@@ -20,25 +23,63 @@ class StatisticsBloc extends Bloc<StatisticsEvent, StatisticsState> {
   StatisticsBloc({required this.getWeeklyStats}) : super(const StatisticsLoading()) {
     on<LoadWeeklyStats>(_onLoadWeeklyStats);
     on<ChangeWeek>(_onChangeWeek);
+    on<LoadMonthlyStats>(_onLoadMonthlyStats);
   }
 
   Future<void> _onLoadWeeklyStats(
       LoadWeeklyStats event, Emitter<StatisticsState> emit) async {
     emit(const StatisticsLoading());
     try {
-      // Xác định tuần: Nếu có ngày do UI truyền thì lấy ngày đó, không thì dùng ngày hiện tại
       if (event.date != null) {
         _currentWeekStart = _getStartOfWeek(event.date!);
       }
 
-      // Gọi UserCase để tính toán và lấy dữ liệu Entity
       final weeklyStats = await getWeeklyStats(_currentWeekStart);
+      final monthlyDailyPomos = _computeMonthlyData();
 
-      // Đẩy dữ liệu ra UI
-      emit(StatisticsLoaded(weeklyStats));
+      emit(StatisticsLoaded(
+        weeklyStats: weeklyStats,
+        monthlyDailyPomos: monthlyDailyPomos,
+      ));
     } catch (e) {
       emit(StatisticsError('Không thể tải lỗi thống kê: ${e.toString()}'));
     }
+  }
+
+  Future<void> _onLoadMonthlyStats(
+      LoadMonthlyStats event, Emitter<StatisticsState> emit) async {
+    if (state is StatisticsLoaded) {
+      final current = state as StatisticsLoaded;
+      final monthlyDailyPomos = _computeMonthlyData();
+      emit(StatisticsLoaded(
+        weeklyStats: current.weeklyStats,
+        monthlyDailyPomos: monthlyDailyPomos,
+      ));
+    }
+  }
+
+  List<int> _computeMonthlyData() {
+    final box = Hive.box<PomodoroSessionModel>('pomodoro_sessions_box');
+    final now = DateTime.now();
+    final thirtyDaysAgo = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 29));
+
+    final List<int> dailyPomos = List.filled(30, 0);
+    for (final session in box.values) {
+      if (!session.isCompleted || session.typeIndex != 0) continue;
+      final sessionDate = DateTime(
+        session.startTime.year,
+        session.startTime.month,
+        session.startTime.day,
+      );
+      if (!sessionDate.isBefore(thirtyDaysAgo)) {
+        final diff = sessionDate.difference(thirtyDaysAgo).inDays;
+        if (diff >= 0 && diff < 30) {
+          dailyPomos[diff]++;
+        }
+      }
+    }
+    return dailyPomos;
   }
 
   Future<void> _onChangeWeek(ChangeWeek event, Emitter<StatisticsState> emit) async {
