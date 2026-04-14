@@ -7,6 +7,7 @@ import '../../../../core/utils/streak_service.dart';
 import '../../../../core/utils/responsive_utils.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/daily_progress_ring.dart';
+import '../../../../core/services/task_change_notifier.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../features/auth/presentation/bloc/auth_state.dart';
@@ -22,22 +23,86 @@ import '../../../../features/settings/presentation/bloc/settings_bloc.dart';
 import '../../../../features/settings/presentation/bloc/settings_state.dart';
 
 /// Màn hình Dashboard "Hôm nay"
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
   @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  // Key để rebuild Dashboard khi có sự kiện PomodoroCompleted
+  final GlobalKey<_DashboardContentState> _contentKey = GlobalKey();
+
+  @override
   Widget build(BuildContext context) {
+    return BlocListener<PomodoroTimerBloc, PomodoroState>(
+      listenWhen: (prev, curr) => curr is PomodoroCompleted,
+      listener: (context, state) {
+        // Trigger rebuild Dashboard khi hoàn thành Pomodoro
+        _contentKey.currentState?.refreshData();
+      },
+      child: TaskChangeListener(
+        onTaskChanged: () {
+          _contentKey.currentState?.refreshData();
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppLogo(size: 32),
+                const SizedBox(width: 8),
+                Text(AppLocalizations.of(context)!.today),
+              ],
+            ),
+            centerTitle: false,
+          ),
+          body: SafeArea(
+            child: _DashboardContent(key: _contentKey),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Phần nội dung chính của Dashboard - tách riêng để có StateKey
+class _DashboardContent extends StatefulWidget {
+  const _DashboardContent({super.key});
+
+  @override
+  State<_DashboardContent> createState() => _DashboardContentState();
+}
+
+class _DashboardContentState extends State<_DashboardContent> {
+  // Dùng để trigger rebuild khi có sự kiện từ ngoài
+  Key _rebuildKey = UniqueKey();
+
+  void refreshData() {
+    // Rebuild lại toàn bộ dashboard khi có sự kiện thay đổi
+    if (mounted) {
+      setState(() {
+        _rebuildKey = UniqueKey();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return KeyedSubtree(
+      key: _rebuildKey,
+      child: _buildDashboardContent(context),
+    );
+  }
+
+  Widget _buildDashboardContent(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final isSmall = ResponsiveUtils.isVerySmallPhone(context);
     final isTablet = ResponsiveUtils.isTablet(context);
-
-    // IndexedStack giữ Dashboard mounted — lắng nghe Pomodoro để đọc lại Hive sau mỗi phiên work
-    context.select<PomodoroTimerBloc, bool>(
-      (b) => b.state is PomodoroCompleted,
-    );
 
     final authState = context.watch<AuthBloc>().state;
     final username = authState is AuthAuthenticated ? authState.user.username : null;
@@ -51,165 +116,149 @@ class DashboardPage extends StatelessWidget {
         ? settingsState.dailyPomodoroGoal
         : 8;
 
-    // Responsive values
     final padding = ResponsiveUtils.horizontalPadding(context);
     final titleSize = ResponsiveUtils.titleFontSize(context);
     final spacing = ResponsiveUtils.spacing(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AppLogo(size: 32),
-            const SizedBox(width: 8),
-            Text(l10n.today),
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(padding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Welcome (if logged in) ──
+          if (username != null && username.isNotEmpty) ...[
+            Text(
+              '${l10n.welcomeLabel} $username!',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: titleSize,
+              ),
+            ),
+            SizedBox(height: isSmall ? 2 : 4),
           ],
-        ),
-        centerTitle: false,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(padding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Welcome (if logged in) ──
-              if (username != null && username.isNotEmpty) ...[
-                Text(
-                  '${l10n.welcomeLabel} $username!',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: titleSize,
-                  ),
-                ),
-                SizedBox(height: isSmall ? 2 : 4),
+
+          // ── Time-based Greeting ──
+          Text(
+            timeGreeting,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: username != null ? (isSmall ? 18 : 20) : titleSize,
+              color: username != null ? theme.colorScheme.onSurface.withOpacity(0.7) : null,
+            ),
+          ),
+          SizedBox(height: isSmall ? 2 : 4),
+          Text(
+            dateText,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              fontSize: isSmall ? 12 : null,
+            ),
+          ),
+          SizedBox(height: spacing),
+
+          // ── Streak Badge ──
+          _StreakBadge(streak: sl<StreakService>().getCurrentStreak(), l10n: l10n),
+          SizedBox(height: isSmall ? 12 : 20),
+
+          // ── Metric Cards (Row trên tablet, Column trên phone) ──
+          if (isTablet)
+            Row(
+              children: [
+                Expanded(child: _MetricCard(label: l10n.pomodoroCount, value: dashboardData.pomodoroCount.toString(), subtitle: l10n.todaySubtitle, icon: Icons.timer, color: Colors.redAccent)),
+                SizedBox(width: padding),
+                Expanded(child: _MetricCard(label: l10n.focusMinutes, value: dashboardData.focusMinutes.toString(), subtitle: l10n.estimated, icon: Icons.access_time, color: Colors.indigo)),
+                SizedBox(width: padding),
+                Expanded(child: _MetricCard(label: l10n.taskCompleted, value: dashboardData.tasksToday.toString(), subtitle: l10n.todaySubtitle, icon: Icons.check_circle_outline, color: Colors.teal)),
               ],
+            )
+          else
+            _MetricCardsRow(dashboardData: dashboardData, l10n: l10n),
 
-              // ── Time-based Greeting ──
+          SizedBox(height: isSmall ? 16 : 24),
+
+          // ── DailyProgressRing ──
+          Center(
+            child: DailyProgressRing(
+              completed: dashboardData.pomodoroCount,
+              goal: dailyGoal,
+              size: ResponsiveUtils.progressRingSize(context),
+            ),
+          ),
+          SizedBox(height: isSmall ? 16 : 24),
+
+          // ── Danh sách task ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
               Text(
-                timeGreeting,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: username != null ? (isSmall ? 18 : 20) : titleSize,
-                  color: username != null ? theme.colorScheme.onSurface.withOpacity(0.7) : null,
+                l10n.prioritiesToday,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: isSmall ? 14 : null,
                 ),
               ),
-              SizedBox(height: isSmall ? 2 : 4),
-              Text(
-                dateText,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  fontSize: isSmall ? 12 : null,
-                ),
-              ),
-              SizedBox(height: spacing),
-
-              // ── Streak Badge ──
-              _StreakBadge(streak: sl<StreakService>().getCurrentStreak(), l10n: l10n),
-              SizedBox(height: isSmall ? 12 : 20),
-
-              // ── Metric Cards (Row trên tablet, Column trên phone) ──
-              if (isTablet)
-                Row(
-                  children: [
-                    Expanded(child: _MetricCard(label: l10n.pomodoroCount, value: dashboardData.pomodoroCount.toString(), subtitle: l10n.todaySubtitle, icon: Icons.timer, color: Colors.redAccent)),
-                    SizedBox(width: padding),
-                    Expanded(child: _MetricCard(label: l10n.focusMinutes, value: dashboardData.focusMinutes.toString(), subtitle: l10n.estimated, icon: Icons.access_time, color: Colors.indigo)),
-                    SizedBox(width: padding),
-                    Expanded(child: _MetricCard(label: l10n.taskCompleted, value: dashboardData.tasksToday.toString(), subtitle: l10n.todaySubtitle, icon: Icons.check_circle_outline, color: Colors.teal)),
-                  ],
-                )
-              else
-                _MetricCardsRow(dashboardData: dashboardData, l10n: l10n),
-
-              SizedBox(height: isSmall ? 16 : 24),
-
-              // ── DailyProgressRing ──
-              Center(
-                child: DailyProgressRing(
-                  completed: dashboardData.pomodoroCount,
-                  goal: dailyGoal,
-                  size: ResponsiveUtils.progressRingSize(context),
-                ),
-              ),
-              SizedBox(height: isSmall ? 16 : 24),
-
-              // ── Danh sách task ──
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    l10n.prioritiesToday,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: isSmall ? 14 : null,
-                    ),
-                  ),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      l10n.taskCount(dashboardData.doItTasks.length),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: isSmall ? 4 : 8),
-              if (dashboardData.doItTasks.isEmpty)
-                Container(
-                  width: double.infinity,
-                  padding: ResponsiveUtils.cardPadding(context),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    l10n.noTasksInQuadrant,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
-                      fontSize: isSmall ? 12 : null,
-                    ),
-                  ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: dashboardData.doItTasks.length.clamp(0, 5),
-                  itemBuilder: (context, index) {
-                    final task = dashboardData.doItTasks[index];
-                    return _TaskListTile(task: task, isSmall: isSmall);
-                  },
-                ),
-
-              SizedBox(height: isSmall ? 16 : 24),
-
-              // ── Nút Pomodoro ──
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const PomodoroPage()),
-                    );
-                  },
-                  icon: Icon(Icons.play_arrow_rounded, size: isSmall ? 20 : 24),
-                  label: Text(
-                    l10n.startPomodoro,
-                    style: TextStyle(fontSize: isSmall ? 14 : 16),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    padding: ResponsiveUtils.buttonPadding(context),
-                    textStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: isSmall ? 14 : 16),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  l10n.taskCount(dashboardData.doItTasks.length),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
                   ),
                 ),
               ),
             ],
           ),
-        ),
+          SizedBox(height: isSmall ? 4 : 8),
+          if (dashboardData.doItTasks.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: ResponsiveUtils.cardPadding(context),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                l10n.noTasksInQuadrant,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  fontSize: isSmall ? 12 : null,
+                ),
+              ),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: dashboardData.doItTasks.length.clamp(0, 5),
+              itemBuilder: (context, index) {
+                final task = dashboardData.doItTasks[index];
+                return _TaskListTile(task: task, isSmall: isSmall);
+              },
+            ),
+
+          SizedBox(height: isSmall ? 16 : 24),
+
+          // ── Nút Pomodoro ──
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PomodoroPage()),
+                );
+              },
+              icon: Icon(Icons.play_arrow_rounded, size: isSmall ? 20 : 24),
+              label: Text(
+                l10n.startPomodoro,
+                style: TextStyle(fontSize: isSmall ? 14 : 16),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: ResponsiveUtils.buttonPadding(context),
+                textStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: isSmall ? 14 : 16),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

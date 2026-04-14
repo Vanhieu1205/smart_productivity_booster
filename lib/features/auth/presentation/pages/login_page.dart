@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/navigation/app_router.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
+import '../../../settings/data/services/backup_service.dart';
 import 'package:smart_productivity_booster/l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
@@ -20,6 +22,8 @@ class _LoginPageState extends State<LoginPage> {
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
   bool _obscurePassword = true;
+  bool _isRestoring = false;
+  bool _isImporting = false;
 
   @override
   void dispose() {
@@ -39,6 +43,95 @@ class _LoginPageState extends State<LoginPage> {
               _passwordController.text,
             ),
           );
+    }
+  }
+
+  Future<void> _onRestoreFromBackup() async {
+    final l10n = AppLocalizations.of(context)!;
+    setState(() => _isRestoring = true);
+
+    try {
+      final backupService = sl<BackupService>();
+      final userData = await backupService.restoreDataAndGetUser();
+
+      if (!mounted) return;
+
+      if (userData != null) {
+        // Có tài khoản trong backup - tự động đăng nhập
+        final email = userData['email'] as String?;
+        final password = userData['password'] as String?;
+
+        if (email != null && password != null) {
+          _emailController.text = email;
+          _passwordController.text = password;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.backupRestoredLogin),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+
+          // Đăng nhập tự động
+          context.read<AuthBloc>().add(LoginRequested(email, password));
+        }
+      } else {
+        // Không có tài khoản trong backup
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.backupNoAccount),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${l10n.importError}: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isRestoring = false);
+      }
+    }
+  }
+
+  /// Nhập dữ liệu từ file backup (chỉ nhập dữ liệu, không đăng nhập)
+  Future<void> _onImportFromBackup() async {
+    final l10n = AppLocalizations.of(context)!;
+    setState(() => _isImporting = true);
+
+    try {
+      final backupService = sl<BackupService>();
+      final success = await backupService.importData();
+
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.importSuccess),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${l10n.importError}: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isImporting = false);
+      }
     }
   }
 
@@ -192,14 +285,14 @@ class _LoginPageState extends State<LoginPage> {
                     BlocBuilder<AuthBloc, AuthState>(
                       builder: (context, state) {
                         return ElevatedButton(
-                          onPressed: state is AuthLoading ? null : _onLogin,
+                          onPressed: (state is AuthLoading || _isRestoring || _isImporting) ? null : _onLogin,
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: state is AuthLoading
+                          child: state is AuthLoading || _isRestoring || _isImporting
                               ? const SizedBox(
                                   height: 24,
                                   width: 24,
@@ -214,6 +307,52 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                         );
                       },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Nút Khôi phục từ Backup
+                    OutlinedButton.icon(
+                      onPressed: _isRestoring ? null : _onRestoreFromBackup,
+                      icon: _isRestoring
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.restore),
+                      label: Text(
+                        l10n.restoreFromBackup,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Nút Nhập dữ liệu từ Backup
+                    OutlinedButton.icon(
+                      onPressed: (_isRestoring || _isImporting) ? null : _onImportFromBackup,
+                      icon: _isImporting
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.upload_file),
+                      label: Text(
+                        l10n.importData,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
 

@@ -475,6 +475,14 @@ class AppLocalizationsVi extends AppLocalizations {
   String get importError => 'Lỗi nhập dữ liệu';
 
   @override
+  String get backupRestoredLogin =>
+      'Khôi phục dữ liệu thành công! Đang đăng nhập...';
+
+  @override
+  String get backupNoAccount =>
+      'File backup không có tài khoản. Vui lòng đăng nhập thủ công.';
+
+  @override
   String get dashboard => 'Bảng điều khiển';
 
   @override

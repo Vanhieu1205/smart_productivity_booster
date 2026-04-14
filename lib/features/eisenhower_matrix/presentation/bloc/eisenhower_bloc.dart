@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/task_change_notifier.dart';
 import '../../domain/entities/task_entity.dart';
 import '../../domain/entities/quadrant_type.dart';
 import '../../../achievements/data/achievement_service.dart';
@@ -96,6 +97,8 @@ class EisenhowerBloc extends Bloc<EisenhowerEvent, EisenhowerState> {
       await updateTaskUseCase(UpdateTaskParams(task: event.task));
       // Tải lại tác vụ trên màn hình
       add(const LoadTasks());
+      // Thông báo cho các trang khác cập nhật
+      sl<TaskChangeNotifier>().notifyTaskChanged();
     } catch (e) {
       emit(EisenhowerError(message: e.toString()));
     }
@@ -106,6 +109,8 @@ class EisenhowerBloc extends Bloc<EisenhowerEvent, EisenhowerState> {
       await deleteTaskUseCase(event.taskId);
       // Tải lại tác vụ
       add(const LoadTasks());
+      // Thông báo cho các trang khác cập nhật
+      sl<TaskChangeNotifier>().notifyTaskChanged();
     } catch (e) {
       emit(EisenhowerError(message: e.toString()));
     }
@@ -116,6 +121,8 @@ class EisenhowerBloc extends Bloc<EisenhowerEvent, EisenhowerState> {
       await moveTaskUseCase(MoveTaskParams(taskId: event.taskId, newQuadrant: event.newQuadrant));
       // Tải lại tác vụ
       add(const LoadTasks());
+      // Thông báo cho các trang khác cập nhật
+      sl<TaskChangeNotifier>().notifyTaskChanged();
     } catch (e) {
       emit(EisenhowerError(message: e.toString()));
     }
@@ -135,6 +142,8 @@ class EisenhowerBloc extends Bloc<EisenhowerEvent, EisenhowerState> {
 
       // Tải lại tác vụ
       add(const LoadTasks());
+      // Thông báo cho các trang khác cập nhật
+      sl<TaskChangeNotifier>().notifyTaskChanged();
     } catch (e) {
       emit(EisenhowerError(message: e.toString()));
     }

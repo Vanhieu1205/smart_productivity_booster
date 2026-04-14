@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_productivity_booster/l10n/app_localizations.dart';
 
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/widgets/app_logo.dart';
+import '../../../settings/data/services/backup_service.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -21,7 +23,9 @@ class _AuthPageState extends State<AuthPage> {
   AuthMode _currentMode = AuthMode.login;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  
+  bool _isImporting = false;
+  bool _isRestoring = false;
+
   String? _currentEmail;
   String? _currentQuestion;
 
@@ -39,7 +43,7 @@ class _AuthPageState extends State<AuthPage> {
   final _confirmPasswordFocusNode = FocusNode();
   final _answerFocusNode = FocusNode();
   final _newPasswordFocusNode = FocusNode();
-  
+
   int _selectedQuestionIndex = 0;
   static const List<String> _securityQuestions = [
     'Tên thú cưng đầu tiên của bạn là gì?',
@@ -72,14 +76,14 @@ class _AuthPageState extends State<AuthPage> {
     _confirmPasswordFocusNode.removeListener(_onFocusChange);
     _answerFocusNode.removeListener(_onFocusChange);
     _newPasswordFocusNode.removeListener(_onFocusChange);
-    
+
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _usernameController.dispose();
     _answerController.dispose();
     _newPasswordController.dispose();
-    
+
     _usernameFocusNode.dispose();
     _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
@@ -116,45 +120,101 @@ class _AuthPageState extends State<AuthPage> {
     if (!_formKey.currentState!.validate()) return;
     _clearFocus();
     context.read<AuthBloc>().add(
-      LoginRequested(_emailController.text.trim(), _passwordController.text),
-    );
+          LoginRequested(
+              _emailController.text.trim(), _passwordController.text),
+        );
   }
 
   void _handleRegister() {
     if (!_formKey.currentState!.validate()) return;
     _clearFocus();
     context.read<AuthBloc>().add(
-      RegisterRequested(
-        _usernameController.text.trim(),
-        _emailController.text.trim(),
-        _passwordController.text,
-        _securityQuestions[_selectedQuestionIndex],
-        _answerController.text.trim(),
-      ),
-    );
+          RegisterRequested(
+            _usernameController.text.trim(),
+            _emailController.text.trim(),
+            _passwordController.text,
+            _securityQuestions[_selectedQuestionIndex],
+            _answerController.text.trim(),
+          ),
+        );
   }
 
   void _handleCheckSecurityQuestion() {
     if (!_formKey.currentState!.validate()) return;
     _clearFocus();
     _currentEmail = _emailController.text.trim();
-    context.read<AuthBloc>().add(CheckSecurityQuestionRequested(_currentEmail!));
+    context
+        .read<AuthBloc>()
+        .add(CheckSecurityQuestionRequested(_currentEmail!));
   }
 
   void _handleVerifyAnswer() {
     if (!_formKey.currentState!.validate()) return;
     _clearFocus();
     context.read<AuthBloc>().add(
-      VerifySecurityAnswerRequested(_currentEmail!, _answerController.text.trim()),
-    );
+          VerifySecurityAnswerRequested(
+              _currentEmail!, _answerController.text.trim()),
+        );
   }
 
   void _handleResetPassword() {
     if (!_formKey.currentState!.validate()) return;
     _clearFocus();
     context.read<AuthBloc>().add(
-      ResetPasswordRequested(_currentEmail!, _newPasswordController.text),
-    );
+          ResetPasswordRequested(_currentEmail!, _newPasswordController.text),
+        );
+  }
+
+  /// Khôi phục dữ liệu từ file backup + đăng nhập tự động
+  Future<void> _onRestoreFromBackup() async {
+    final l10n = AppLocalizations.of(context)!;
+    setState(() => _isRestoring = true);
+
+    try {
+      final backupService = sl<BackupService>();
+      final userData = await backupService.restoreDataAndGetUser();
+
+      if (!mounted) return;
+
+      if (userData != null) {
+        final email = userData['email'] as String?;
+        final password = userData['password'] as String?;
+
+        if (email != null && password != null) {
+          _emailController.text = email;
+          _passwordController.text = password;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.backupRestoredLogin),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+
+          context.read<AuthBloc>().add(LoginRequested(email, password));
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.backupNoAccount),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${l10n.importError}: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isRestoring = false);
+      }
+    }
   }
 
   @override
@@ -358,10 +418,13 @@ class _AuthPageState extends State<AuthPage> {
                 ),
               ),
               obscureText: _obscurePassword,
-              textInputAction: isLogin ? TextInputAction.done : TextInputAction.next,
+              textInputAction:
+                  isLogin ? TextInputAction.done : TextInputAction.next,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return isLogin ? l10n.cannotBeEmpty : l10n.passwordCannotBeEmpty;
+                  return isLogin
+                      ? l10n.cannotBeEmpty
+                      : l10n.passwordCannotBeEmpty;
                 }
                 if (!isLogin && value.length < 6) {
                   return l10n.passwordMinLength;
@@ -396,8 +459,8 @@ class _AuthPageState extends State<AuthPage> {
                           : Icons.visibility,
                     ),
                     onPressed: () {
-                      setState(
-                          () => _obscureConfirmPassword = !_obscureConfirmPassword);
+                      setState(() =>
+                          _obscureConfirmPassword = !_obscureConfirmPassword);
                     },
                   ),
                 ),
@@ -415,7 +478,6 @@ class _AuthPageState extends State<AuthPage> {
                 onFieldSubmitted: (_) => _answerFocusNode.requestFocus(),
               ),
               const SizedBox(height: 16),
-
               Text(
                 l10n.securityQuestion,
                 style: theme.textTheme.titleSmall,
@@ -459,7 +521,6 @@ class _AuthPageState extends State<AuthPage> {
                 },
               ),
               const SizedBox(height: 16),
-
               TextFormField(
                 controller: _answerController,
                 focusNode: _answerFocusNode,
@@ -494,11 +555,37 @@ class _AuthPageState extends State<AuthPage> {
               const SizedBox(height: 8),
             ],
 
+            // Nút nhập file dữ liệu (Login only)
+            if (isLogin) ...[
+              const Divider(),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: (_isRestoring || _isImporting)
+                          ? null
+                          : _onRestoreFromBackup,
+                      icon: _isRestoring
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.restore, size: 18),
+                      label: Text(l10n.restoreFromBackup,
+                          style: const TextStyle(fontSize: 12)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Submit button
             FilledButton(
-              onPressed: isLoading
-                  ? null
-                  : (isLogin ? _handleLogin : _handleRegister),
+              onPressed:
+                  isLoading ? null : (isLogin ? _handleLogin : _handleRegister),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -547,6 +634,7 @@ class _AuthPageState extends State<AuthPage> {
       },
     );
   }
+
 // Forgot Password Content dùng để nhập email và gửi link đặt lại mật khẩu
   Widget _buildForgotPasswordContent(AppLocalizations l10n, ThemeData theme) {
     final emailFocusNode = FocusNode();
@@ -667,7 +755,8 @@ class _AuthPageState extends State<AuthPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(

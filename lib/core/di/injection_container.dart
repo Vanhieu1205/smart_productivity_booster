@@ -10,6 +10,7 @@ import 'package:hive/hive.dart';
 
 // ── Core ──────────────────────────────────────────────────────────────────────
 import '../../core/utils/streak_service.dart';
+import '../../core/services/task_change_notifier.dart';
 
 // ── Feature: Auth ─────────────────────────────────────────────────────────────
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
@@ -72,10 +73,16 @@ Future<void> init() async {
   // ──────────────────────────────────────────────────────────────────────────
   // TaskLocalDataSourceImpl sẽ tự động quản lý việc mở box khi cần thiết
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // 1.25. FEATURE: AUTHENTICATION
-  // ──────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────
+// 1.25. FEATURE: AUTHENTICATION
+// ──────────────────────────────────────────────────────────────────────────
   _initAuth();
+
+// ──────────────────────────────────────────────────────────────────────────
+// 1.3. CORE SERVICES
+// ──────────────────────────────────────────────────────────────────────────
+  // TaskChangeNotifier - thông báo khi task thay đổi
+  sl.registerLazySingleton(() => TaskChangeNotifier());
 
   // ──────────────────────────────────────────────────────────────────────────
   // 1.5. FEATURE: ONBOARDING

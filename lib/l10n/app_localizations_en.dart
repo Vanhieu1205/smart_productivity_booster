@@ -471,6 +471,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importError => 'Import error';
 
   @override
+  String get backupRestoredLogin => 'Data restored successfully! Logging in...';
+
+  @override
+  String get backupNoAccount =>
+      'No account found in backup. Please login manually.';
+
+  @override
   String get dashboard => 'Dashboard';
 
   @override

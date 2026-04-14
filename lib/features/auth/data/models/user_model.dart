@@ -111,4 +111,34 @@ class UserModel extends UserEntity {
     final bytes = utf8.encode(raw.toLowerCase().trim());
     return base64Encode(bytes);
   }
+
+  /// Chuyển đổi sang Map để lưu backup
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'username': username,
+      'email': email,
+      'passwordHash': passwordHash,
+      'createdAt': createdAt.toIso8601String(),
+      'avatarInitials': avatarInitials,
+      'securityQuestion': securityQuestion,
+      'securityAnswer': securityAnswer,
+      'avatarPath': avatarPath,
+    };
+  }
+
+  /// Tạo UserModel từ Map (dùng khi restore backup)
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'] as String,
+      username: json['username'] as String,
+      email: json['email'] as String,
+      passwordHash: json['passwordHash'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      avatarInitials: json['avatarInitials'] as String,
+      securityQuestion: json['securityQuestion'] as String?,
+      securityAnswer: json['securityAnswer'] as String?,
+      avatarPath: json['avatarPath'] as String?,
+    );
+  }
 }

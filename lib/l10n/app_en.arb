@@ -164,6 +164,8 @@
   "continueText": "Continue",
   "importSuccess": "Import successful",
   "importError": "Import error",
+  "backupRestoredLogin": "Data restored successfully! Logging in...",
+  "backupNoAccount": "No account found in backup. Please login manually.",
 
   "dashboard": "Dashboard",
   "today": "Today",

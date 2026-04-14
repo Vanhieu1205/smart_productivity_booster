@@ -164,6 +164,8 @@
   "continueText": "Tiếp tục",
   "importSuccess": "Nhập dữ liệu thành công",
   "importError": "Lỗi nhập dữ liệu",
+  "backupRestoredLogin": "Khôi phục dữ liệu thành công! Đang đăng nhập...",
+  "backupNoAccount": "File backup không có tài khoản. Vui lòng đăng nhập thủ công.",
 
   "dashboard": "Bảng điều khiển",
   "today": "Hôm nay",

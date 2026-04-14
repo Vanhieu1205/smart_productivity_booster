@@ -6,6 +6,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../eisenhower_matrix/data/models/task_model.dart';
 import '../../../pomodoro_timer/data/models/pomodoro_session_model.dart';
+import '../../../settings/data/models/settings_model.dart';
+import '../../../auth/data/models/user_model.dart';
 
 // ============================================================
 // BACKUP SERVICE – Data Layer
@@ -15,13 +17,14 @@ import '../../../pomodoro_timer/data/models/pomodoro_session_model.dart';
 // Chức năng:
 // - Export: Đọc dữ liệu từ Hive → ghi JSON → chia sẻ file
 // - Import: Chọn file JSON → đọc → validate → khôi phục vào Hive
+// - Restore: Khôi phục dữ liệu + tự động đăng nhập với tài khoản trong backup
 
 class BackupService {
   /// Tên ứng dụng trong file backup (dùng để validate)
   static const String _appName = 'Smart Productivity Booster';
 
   /// Version của định dạng backup
-  static const int _dataVersion = 1;
+  static const int _dataVersion = 2;
 
   /// Tên file backup mặc định (có timestamp)
   String get _backupFileName {
@@ -39,16 +42,40 @@ class BackupService {
   /// Dữ liệu xuất bao gồm:
   /// - Tasks (tasks_box)
   /// - Pomodoro Sessions (pomodoro_sessions_box)
+  /// - Settings (settings_box)
+  /// - User accounts (users box)
+  /// - Achievements (achievements_box)
   Future<String> exportData() async {
     // Đọc dữ liệu từ Hive
     final tasksBox = Hive.box<TaskModel>('tasks_box');
     final sessionsBox = Hive.box<PomodoroSessionModel>('pomodoro_sessions_box');
+    final settingsBox = Hive.box<SettingsModel>('settings_box');
+    final usersBox = Hive.box<UserModel>('users');
+    final achievementsBox = Hive.box<dynamic>('achievements_box');
 
-    // Chuyển tasks sang list map (dùng toJson() để đảm bảo đúng format)
+    // Chuyển tasks sang list map
     final tasksList = tasksBox.values.map((task) => task.toJson()).toList();
 
-    // Chuyển sessions sang list map (dùng toJson() để đảm bảo đúng format)
+    // Chuyển sessions sang list map
     final sessionsList = sessionsBox.values.map((session) => session.toJson()).toList();
+
+    // Chuyển settings sang list map
+    final settingsList = settingsBox.values.map((settings) => settings.toJson()).toList();
+
+    // Chuyển users sang list map
+    final usersList = usersBox.values.map((user) => user.toJson()).toList();
+
+    // Chuyển achievements sang list map
+    final achievementsList = <Map<String, dynamic>>[];
+    for (final key in achievementsBox.keys) {
+      final value = achievementsBox.get(key);
+      if (value is Map) {
+        achievementsList.add({
+          'id': key.toString(),
+          ...Map<String, dynamic>.from(value),
+        });
+      }
+    }
 
     // Tạo map dữ liệu backup
     final backupData = {
@@ -57,6 +84,9 @@ class BackupService {
       'exportedAt': DateTime.now().toIso8601String(),
       'tasks': tasksList,
       'sessions': sessionsList,
+      'settings': settingsList,
+      'users': usersList,
+      'achievements': achievementsList,
     };
 
     // Lấy thư mục documents của app
@@ -123,30 +153,124 @@ class BackupService {
         throw Exception('File không phải là backup của $_appName');
       }
 
-      // Bước 4: Clear boxes hiện tại
-      final tasksBox = Hive.box<TaskModel>('tasks_box');
-      final sessionsBox = Hive.box<PomodoroSessionModel>('pomodoro_sessions_box');
-      await tasksBox.clear();
-      await sessionsBox.clear();
-
-      // Bước 5: Khôi phục tasks bằng fromJson()
-      final tasksList = data['tasks'] as List<dynamic>? ?? [];
-      for (final taskData in tasksList) {
-        final task = TaskModel.fromJson(taskData as Map<String, dynamic>);
-        await tasksBox.put(task.id, task);
-      }
-
-      // Bước 6: Khôi phục sessions bằng fromJson()
-      final sessionsList = data['sessions'] as List<dynamic>? ?? [];
-      for (final sessionData in sessionsList) {
-        final session = PomodoroSessionModel.fromJson(sessionData as Map<String, dynamic>);
-        await sessionsBox.put(session.id, session);
-      }
+      await _restoreData(data);
 
       return true;
     } catch (e) {
       // Log lỗi và trả về false
       rethrow;
+    }
+  }
+
+  /// Khôi phục dữ liệu từ map đã parse (dùng chung cho import và restore)
+  Future<void> _restoreData(Map<String, dynamic> data) async {
+    // Clear boxes hiện tại
+    final tasksBox = Hive.box<TaskModel>('tasks_box');
+    final sessionsBox = Hive.box<PomodoroSessionModel>('pomodoro_sessions_box');
+    final settingsBox = Hive.box<SettingsModel>('settings_box');
+    final usersBox = Hive.box<UserModel>('users');
+    final achievementsBox = Hive.box<dynamic>('achievements_box');
+
+    await tasksBox.clear();
+    await sessionsBox.clear();
+    await settingsBox.clear();
+    await usersBox.clear();
+    await achievementsBox.clear();
+
+    // Khôi phục tasks
+    final tasksList = data['tasks'] as List<dynamic>? ?? [];
+    for (final taskData in tasksList) {
+      final task = TaskModel.fromJson(taskData as Map<String, dynamic>);
+      await tasksBox.put(task.id, task);
+    }
+
+    // Khôi phục sessions
+    final sessionsList = data['sessions'] as List<dynamic>? ?? [];
+    for (final sessionData in sessionsList) {
+      final session = PomodoroSessionModel.fromJson(sessionData as Map<String, dynamic>);
+      await sessionsBox.put(session.id, session);
+    }
+
+    // Khôi phục settings
+    final settingsList = data['settings'] as List<dynamic>? ?? [];
+    for (final settingsData in settingsList) {
+      final settings = SettingsModel.fromJson(settingsData as Map<String, dynamic>);
+      await settingsBox.put(settings.id, settings);
+    }
+
+    // Khôi phục users
+    final usersList = data['users'] as List<dynamic>? ?? [];
+    for (final userData in usersList) {
+      final user = UserModel.fromJson(userData as Map<String, dynamic>);
+      await usersBox.put(user.id, user);
+    }
+
+    // Khôi phục achievements
+    final achievementsList = data['achievements'] as List<dynamic>? ?? [];
+    for (final achData in achievementsList) {
+      final achMap = achData as Map<String, dynamic>;
+      final id = achMap['id'] as String?;
+      if (id != null) {
+        achMap.remove('id');
+        await achievementsBox.put(id, achMap);
+      }
+    }
+  }
+
+  /// Khôi phục dữ liệu từ file backup và trả về thông tin tài khoản đầu tiên (nếu có)
+  /// Dùng cho tính năng đăng nhập từ backup
+  Future<Map<String, dynamic>?> restoreDataAndGetUser() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return null;
+      }
+
+      final filePath = result.files.single.path;
+      if (filePath == null) {
+        return null;
+      }
+
+      final file = File(filePath);
+      final jsonString = await file.readAsString();
+      final data = jsonDecode(jsonString) as Map<String, dynamic>;
+
+      final appName = data['app'] as String?;
+      if (appName != _appName) {
+        throw Exception('File không phải là backup của $_appName');
+      }
+
+      await _restoreData(data);
+
+      // Trả về thông tin tài khoản đầu tiên (nếu có)
+      final usersList = data['users'] as List<dynamic>? ?? [];
+      if (usersList.isNotEmpty) {
+        final firstUser = usersList.first as Map<String, dynamic>;
+        return {
+          'email': firstUser['email'] as String?,
+          'password': _decodePassword(firstUser['passwordHash'] as String?),
+        };
+      }
+
+      return null;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Giải mã password từ hash (base64)
+  String? _decodePassword(String? hash) {
+    if (hash == null || hash.isEmpty) return null;
+    try {
+      final bytes = base64Decode(hash);
+      return utf8.decode(bytes);
+    } catch (_) {
+      return null;
     }
   }
 }

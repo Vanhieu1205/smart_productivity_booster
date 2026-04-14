@@ -9,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/skeleton_box.dart';
-import '../../../pomodoro_timer/domain/entities/timer_type.dart';
+import '../../../../core/services/task_change_notifier.dart';
 import '../../../pomodoro_timer/presentation/bloc/pomodoro_timer_bloc.dart';
 import '../../../pomodoro_timer/presentation/bloc/pomodoro_timer_state.dart';
 import '../bloc/statistics_bloc.dart';
@@ -119,79 +119,80 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
     return BlocListener<PomodoroTimerBloc, PomodoroState>(
       listenWhen: (prev, curr) => curr is PomodoroCompleted,
       listener: (context, state) {
-        if (state is! PomodoroCompleted) return;
-        if (state.completedType != TimerType.work) return;
         context.read<StatisticsBloc>().add(const LoadWeeklyStats());
         context.read<StatisticsBloc>().add(const LoadMonthlyStats());
       },
-      child: Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AppLogo(size: 32),
-            const SizedBox(width: 8),
-            Text(l10n.statistics, style: const TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        centerTitle: false,
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: l10n.week),
-            Tab(text: l10n.month),
-          ],
-        ),
-        actions: [
-          // Nút share (ShareCard không đặt trong actions: AppBar chỉ cho chiều cao ~kToolbarButtonHeight → overflow)
-          IconButton(
-            icon: const Icon(Icons.share),
-            tooltip: l10n.shareStats,
-            onPressed: _shareStats,
-          ),
-          // Nút refresh
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: l10n.refresh,
-            onPressed: () => context.read<StatisticsBloc>().add(const LoadWeeklyStats()),
-          ),
-        ],
-      ),
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          TabBarView(
-            controller: _tabController,
-            children: [
-              _buildWeekView(context, l10n),
-              _buildMonthView(context, l10n),
+      child: TaskChangeListener(
+        onTaskChanged: () {
+          context.read<StatisticsBloc>().add(const LoadWeeklyStats());
+          context.read<StatisticsBloc>().add(const LoadMonthlyStats());
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppLogo(size: 32),
+                const SizedBox(width: 8),
+                Text(l10n.statistics, style: const TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            centerTitle: false,
+            bottom: TabBar(
+              controller: _tabController,
+              tabs: [
+                Tab(text: l10n.week),
+                Tab(text: l10n.month),
+              ],
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.share),
+                tooltip: l10n.shareStats,
+                onPressed: _shareStats,
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: l10n.refresh,
+                onPressed: () => context.read<StatisticsBloc>().add(const LoadWeeklyStats()),
+              ),
             ],
           ),
-          // Card ẩn ngoài màn hình để chụp ảnh — phải nằm trong body (constraints đủ cao)
-          Positioned(
-            left: -4000,
-            top: 0,
-            child: IgnorePointer(
-              child: BlocBuilder<StatisticsBloc, StatisticsState>(
-                builder: (context, state) {
-                  if (state is StatisticsLoaded) {
-                    return RepaintBoundary(
-                      key: _shareCardKey,
-                      child: ShareCard(
-                        stats: state.weeklyStats,
-                        streakDays: _streakDays,
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildWeekView(context, l10n),
+                  _buildMonthView(context, l10n),
+                ],
               ),
-            ),
+              Positioned(
+                left: -4000,
+                top: 0,
+                child: IgnorePointer(
+                  child: BlocBuilder<StatisticsBloc, StatisticsState>(
+                    builder: (context, state) {
+                      if (state is StatisticsLoaded) {
+                        return RepaintBoundary(
+                          key: _shareCardKey,
+                          child: ShareCard(
+                            stats: state.weeklyStats,
+                            streakDays: _streakDays,
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    ),
     );
   }
 
@@ -364,7 +365,6 @@ class _StatisticsPageState extends State<StatisticsPage> with SingleTickerProvid
         }
 
         if (state is StatisticsLoaded) {
-          final stats = state.weeklyStats;
           final monthlyPomos = state.monthlyDailyPomos.isNotEmpty
               ? state.monthlyDailyPomos
               : List.filled(30, 0);

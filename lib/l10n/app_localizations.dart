@@ -1010,6 +1010,18 @@ abstract class AppLocalizations {
   /// **'Import error'**
   String get importError;
 
+  /// No description provided for @backupRestoredLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Data restored successfully! Logging in...'**
+  String get backupRestoredLogin;
+
+  /// No description provided for @backupNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'No account found in backup. Please login manually.'**
+  String get backupNoAccount;
+
   /// No description provided for @dashboard.
   ///
   /// In en, this message translates to:
